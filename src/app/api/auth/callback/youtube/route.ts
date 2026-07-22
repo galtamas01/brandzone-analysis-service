@@ -49,7 +49,6 @@ export async function GET(request: Request) {
         });
 
         const tokenData = await response.json();
-
         if (!response.ok) {
             return NextResponse.json(
                 { error: "Failed to get tokens from Google" },
@@ -57,9 +56,99 @@ export async function GET(request: Request) {
             );
         }
 
+        const accessToken: string = tokenData.access_token;
+        const refreshToken: string | undefined = tokenData.refresh_token;
+        const expiresIn: number = tokenData.expires_in;
+        const expiresAt = new Date(Date.now() + expiresIn * 1000).toISOString();
+
+        const channelResponse = await fetch(
+            "https://www.googleapis.com/youtube/v3/channels?part=id,snippet&mine=true",
+            { headers: { Authorization: `Bearer ${accessToken}` } }
+        );
+        const channelData = await channelResponse.json();
+        if (!channelResponse.ok || !channelData.items?.length) {
+            console.error("YouTube channel fetch error: ", channelData);
+            return NextResponse.json(
+                { error: "Could not fetch YouTube channel for this account" },
+                { status: 400 }
+            );
+        }
+        const channelId: string = channelData.items[0].id;
+        const channelTitle: string = channelData.items[0].snippet?.title || "YouTube csatorna"
+
+        const { data: existingAccount, error: lookupError } = await supabaseAdmin
+            .from("account")
+            .select("id")
+            .eq("client_id", partnerClientId)
+            .eq("platform", "youtube")
+            .eq("platform_account_id", channelId)
+            .maybeSingle();
+
+        if (lookupError) {
+            console.error("Account lookup error: ", lookupError);
+            return NextResponse.json(
+                { error: "Failed to look up account" },
+                { status: 500 }
+            );
+        }
+
+        let accountId: string;
+
+        if (existingAccount) {
+            accountId = existingAccount.id;
+            await supabaseAdmin
+                .from("account")
+                .update({name: channelTitle})
+                .eq("id", accountId);
+        } else {
+            const { data: newAccount, error: insertError } = await supabaseAdmin
+                .from("account")
+                .insert({
+                    client_id: partnerClientId,
+                    platform: "youtube",
+                    name: channelTitle,
+                    platform_account_id: channelId,
+                })
+                .select("id")
+                .single();
+            
+            if (insertError || !newAccount) {
+                console.error("Account insert error: ", insertError);
+                return NextResponse.json(
+                    { error: "Failed to create account" },
+                    { status: 500 }
+                );
+            }
+
+            accountId = newAccount.id;
+        }
+
+        const tokenRow: Record<string, unknown> = {
+            account_id: accountId,
+            access_token: encrypt(accessToken),
+            expires_at: expiresAt,
+        };
+        if (refreshToken) tokenRow.refresh_token = encrypt(refreshToken);
+
+        const { error: tokenUpsertError } = await supabaseAdmin
+            .from("oauth_token")
+            .upsert(tokenRow, { onConflict: "account_id" });
+
+        if (tokenUpsertError) {
+            console.error("Token upsert error: ", tokenUpsertError);
+            return NextResponse.json(
+                { error: "Failed to store tokens" },
+                { status: 500 }
+            );
+        }
+
         return NextResponse.json({
-            message: "OAuth Code exchange successful",
-            tokens: tokenData
+            message: "YouTube account connected successfully",
+            client_id: partnerClientId,
+            account_id: accountId,
+            channel_id: channelId,
+            channel_title: channelTitle,
+            has_refresh_token: Boolean(refreshToken),
         });
 
     } catch (error: any) {
