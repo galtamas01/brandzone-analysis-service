@@ -40,7 +40,16 @@ export async function getValidAccessToken(accountId: string): Promise<string> {
     const expiresAt = tokenRow.expires_at ? new Date(tokenRow.expires_at).getTime() : 0;
     const stillValid = expiresAt - EXPIRY_BUFFER_MS > Date.now();
 
-    if (stillValid) return decrypt(tokenRow.access_token)
+    if (stillValid) {
+
+        //TEMP
+        console.log("[token] tarolt tokent hasznalok, expires_at", tokenRow.expires_at);
+
+        return decrypt(tokenRow.access_token);
+    }
+
+    //TEMP
+    console.log("[token] frissítek, régi expires_at:", tokenRow.expires_at);
 
     if (!tokenRow.refresh_token) {
         throw new TokenError("NO_REFRESH_TOKEN", "Access token expired and no refresh token found. Reconnect the account", 401)
@@ -91,5 +100,8 @@ export async function getValidAccessToken(accountId: string): Promise<string> {
         console.error("Token update error after refresh: ", updateError)
     }
 
+    //TEMP
+    console.log("[token] frissítve, új expires_at:", newExpiresAt, "hossz:", newAccessToken?.length);
+    
     return newAccessToken;
 }

@@ -1,6 +1,4 @@
 import { NextResponse } from "next/server";
-import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { decrypt } from "@/lib/encryption";
 import { getValidAccessToken, TokenError } from "@/lib/youtubeAuth";
 
 export async function GET(request: Request) {
@@ -49,7 +47,7 @@ export async function GET(request: Request) {
                 { status: err.status }
             );
         }
-        
+
         console.error("Server error", err);
         return NextResponse.json(
             { error: "Server error occured" },
