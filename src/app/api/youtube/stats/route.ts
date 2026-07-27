@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { decrypt } from "@/lib/encryption";
+import { getValidAccessToken, TokenError } from "@/lib/youtubeAuth";
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
@@ -14,35 +15,7 @@ export async function GET(request: Request) {
     }
 
     try {
-        const { data: tokenRow, error: tokenError } = await supabaseAdmin
-        .from("oauth_token")
-        .select("access_token, expires_at")
-        .eq("account_id", accountId)
-        .maybeSingle();
-    
-        if (tokenError) {
-            console.error("Token lookup error: ", tokenError);
-            return NextResponse.json(
-                { error: "Failed to lookup token" },
-                { status: 500 }
-            );
-        }
-
-        if (!tokenRow) {
-            return NextResponse.json(
-                { error: "No token found for this account. Connect the account first!" },
-                { status: 404 }
-            )
-        }
-
-        if (tokenRow.expires_at && new Date(tokenRow.expires_at) < new Date()) {
-            return NextResponse.json(
-                { error: "Access token expired",
-                expired_at: tokenRow.expires_at },
-                { status: 401 }
-            )
-        }
-        const accessToken = decrypt(tokenRow.access_token);
+        const accessToken = await getValidAccessToken(accountId);
 
         const statsResponse = await fetch("https://www.googleapis.com/youtube/v3/channels?part=snippet,statistics&mine=true",
             { headers: { Authorization: `Bearer ${accessToken}` } }
@@ -70,6 +43,13 @@ export async function GET(request: Request) {
             subscriber_hidden: Boolean(stats.hiddenSubscriberCount),
         });
     } catch (err) {
+        if (err instanceof TokenError) {
+            return NextResponse.json(
+                { error: err.message, code: err.code },
+                { status: err.status }
+            );
+        }
+        
         console.error("Server error", err);
         return NextResponse.json(
             { error: "Server error occured" },
