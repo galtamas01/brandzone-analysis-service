@@ -1,0 +1,26 @@
+:root{
+--blur-glass:20px;
+--shadow-glass:0 0 25px rgba(255,255,255,0.05);
+--shadow-glass-hover:0 0 15px rgba(255,255,255,0.2);
+--ease-standard:all 0.2s ease-in-out; /* @kind other */
+--ease-slow:all 0.3s ease; /* @kind other */
+}
+.card-effects{
+background-color:var(--glass-bg);
+backdrop-filter:blur(var(--blur-glass));
+-webkit-backdrop-filter:blur(var(--blur-glass));
+border:1px solid var(--border-subtle);
+box-shadow:var(--shadow-glass);
+border-radius:var(--radius-md);
+transition:var(--ease-standard);
+}
+.card-effects:hover{
+transform:scale(1.02);
+box-shadow:var(--shadow-glass-hover);
+border-color:var(--border-hover);
+}
+body{background:var(--bg-main);color:var(--text-primary);font-family:var(--font-body);margin:0;-webkit-font-smoothing:antialiased}
+::selection{background:rgba(255,255,255,0.25)}
+::-webkit-scrollbar{width:10px;height:10px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,0.15);border-radius:10px}

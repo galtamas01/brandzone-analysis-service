@@ -1,8 +1,8 @@
 "use client"
 
+import styles from "./CreateClientForm.module.css"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import styles from "./CreateClientForm.module.css"
 
 export default function CreateClientForm() {
     const router = useRouter();

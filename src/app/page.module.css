@@ -1,60 +1,138 @@
+body {
+  width: 100%;
+  background: var(--bg-main);
+  background: url("/vonal.svg");
+  background-repeat: no-repeat;
+  background-size: cover;
+
+  &::before {
+    position: absolute;
+    content: "";
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    backdrop-filter: blur(var(--blur-glass)) brightness(0.7);
+    -webkit-backdrop-filter: blur(var(--blur-glass)) brightness(0.7);
+    
+  }
+}
+
 .main {
-    max-width: 42rem;
-    margin: 0 auto;
-    padding: 2rem;
-    font-family: system-ui, sans-serif;
+  margin:auto;
+  width: 60%;
+  min-width: 40dvw;
+  padding: var(--space-8) var(--space-6);
+  font-family: var(--font-body);
+  color: var(--text-primary);
+  min-height: 90dvh;
+  position: relative;
+  border-radius: var(--radius-lg);
+  background: var(--border-subtle);
+
+}
+
+.logoWrapper {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin: var(--space-4) auto;
+
+    & img {
+      width: 20%;
+      filter: invert() drop-shadow(0 0 10px rgba(255,255,255,0.5));
+      -webkit-filter: invert() drop-shadow(0 0 10px rgba(255,255,255,0.5));
+    }
 }
 
 .title {
-    margin-bottom: 1.5rem;
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: #2563eb;
+  margin: 0 0 var(--space-8);
+  font-family: var(--font-display);
+  font-size: var(--text-h1-size);
+  font-weight: var(--fw-black);
+  color: var(--text-primary);
+  text-shadow: var(--text-h1-shadow);
+  letter-spacing: -0.01em;
 }
 
 .error {
-    margin-bottom: 1rem;
-    padding: 1rem;
-    border-radius: 0.375rem;
-    background-color: #fee2e2;
-    color: #b91c1c;
+  margin-bottom: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border-radius: var(--radius-md);
+  background-color: var(--glass-bg);
+  backdrop-filter: blur(var(--blur-glass));
+  -webkit-backdrop-filter: blur(var(--blur-glass));
+  border: 1px solid var(--status-danger);
+  box-shadow: 0 0 15px var(--status-danger-glow);
+  color: var(--status-danger);
+  font-size: var(--text-body-size);
 }
 
 .empty {
-    color: #6b7280;
+  color: var(--text-muted);
+  font-size: var(--text-body-size);
 }
 
 .list {
-    list-style: none;
-    margin: 0;
-    padding: 0;
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
 }
 
 .clientRow {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0.75rem;
-    border: 1px solid #e5e7eb;
-    border-radius: 0.375rem;
-    background-color: #f9fafb;
-    text-decoration: none;
-    color: inherit;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background-color: var(--border-subtle);
+  backdrop-filter: blur(var(--blur-glass));
+  -webkit-backdrop-filter: blur(var(--blur-glass));
+  box-shadow: var(--shadow-glass);
+  text-decoration: none;
+  color: inherit;
+  transition: var(--ease-standard);
 }
 
 .clientRow:hover {
-    background-color: #f3f4f6;
+  transform: scale(1.02);
+  box-shadow: var(--shadow-glass-hover);
+  border-color: var(--border-hover);
 }
 
 .clientName {
-    font-weight: 500;
-    color: #1f2937;
+  font-weight: var(--fw-medium);
+  color: var(--text-primary);
+  font-size: var(--text-body-size);
 }
 
 .arrow {
-    font-size: 0.75rem;
-    color: #9ca3af;
+  font-size: var(--text-caption-size);
+  color: var(--text-muted);
+  transition: var(--ease-standard);
+}
+
+.clientRow:hover .arrow {
+  color: var(--text-primary);
+  text-shadow: 0 0 8px rgba(255, 255, 255, 0.6);
+}
+
+@media (max-width: 640px) {
+  .main {
+    padding: var(--space-6) var(--space-4);
+  }
+
+  .title {
+    margin-bottom: var(--space-6);
+  }
+
+  .clientRow {
+    padding: var(--space-3) var(--space-4);
+  }
 }

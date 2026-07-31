@@ -15,7 +15,8 @@ export default async function ClientsPage() {
 
   return (
     <main className={styles.main}>
-      <h1 className={styles.title}>BrandZone Clients</h1>
+      <div className={styles.logoWrapper}><img src="/brandzone-menu-logo.png" alt="BrandZone logo" /></div>
+      <h1 className={styles.title}>Clients</h1>
 
       <CreateClientForm />
 
