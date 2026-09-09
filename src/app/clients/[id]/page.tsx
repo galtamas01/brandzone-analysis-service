@@ -1,7 +1,8 @@
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import styles from "./page.module.css"
+import 'material-symbols/outlined.css';
+import styles from "./page.module.css";
 
 export const dynamic = "force-dynamic";
 
@@ -44,7 +45,7 @@ export default async function ClientDetailPage({
 
     return (
         <main className={styles.main}>
-            <Link href="/" className={styles.back}>← Vissza az ügyfelekhez</Link>
+            <Link href="/" className={styles.back}>← Back to clients list</Link>
 
             <h1 className={styles.title}>{client.name}</h1>
 

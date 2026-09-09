@@ -3,30 +3,24 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { encrypt } from "@/lib/encryption";
 
 export async function GET(request: Request) {
+    const redirectTo = (path: string) => {
+        return NextResponse.redirect(new URL(path, request.url));
+    };
     const { searchParams } = new URL(request.url);
     const code = searchParams.get('code');
     const error = searchParams.get('error');
     const state = searchParams.get('state');
 
     if (error) {
-        return NextResponse.json(
-            { error: "The authentication process was interrupted" },
-            { status: 400 }
-        );
+        return redirectTo(`/?error=oauth_denied`);
     }
 
     if (!code) {
-        return NextResponse.json(
-            { error: "Authentication code not found" },
-            { status: 400 }
-        );
+        return redirectTo(`/?error=missing_code`);
     }
 
     if (!state) {
-        return NextResponse.json(
-            { error: "Missing state (partner client ID)" },
-            { status: 400 }
-        );
+        return redirectTo(`/?error=missing_state`);
     }
 
     const partnerClientId = state;
@@ -50,10 +44,8 @@ export async function GET(request: Request) {
 
         const tokenData = await response.json();
         if (!response.ok) {
-            return NextResponse.json(
-                { error: "Failed to get tokens from Google" },
-                { status: response.status }
-            );
+            console.error("Google token exchange error: ", tokenData);
+            return redirectTo(`/clients/${partnerClientId}?error=token_exchange`);
         }
 
         const accessToken: string = tokenData.access_token;
@@ -68,10 +60,7 @@ export async function GET(request: Request) {
         const channelData = await channelResponse.json();
         if (!channelResponse.ok || !channelData.items?.length) {
             console.error("YouTube channel fetch error: ", channelData);
-            return NextResponse.json(
-                { error: "Could not fetch YouTube channel for this account" },
-                { status: 400 }
-            );
+            return redirectTo(`/clients/${partnerClientId}?error=channel_fetch`);
         }
         const channelId: string = channelData.items[0].id;
         const channelTitle: string = channelData.items[0].snippet?.title || "YouTube csatorna"
@@ -86,10 +75,7 @@ export async function GET(request: Request) {
 
         if (lookupError) {
             console.error("Account lookup error: ", lookupError);
-            return NextResponse.json(
-                { error: "Failed to look up account" },
-                { status: 500 }
-            );
+            return redirectTo(`/clients/${partnerClientId}?error=account_save`);
         }
 
         let accountId: string;
@@ -114,10 +100,7 @@ export async function GET(request: Request) {
             
             if (insertError || !newAccount) {
                 console.error("Account insert error: ", insertError);
-                return NextResponse.json(
-                    { error: "Failed to create account" },
-                    { status: 500 }
-                );
+                return redirectTo(`/clients/${partnerClientId}?error=account_save`);
             }
 
             accountId = newAccount.id;
@@ -136,26 +119,13 @@ export async function GET(request: Request) {
 
         if (tokenUpsertError) {
             console.error("Token upsert error: ", tokenUpsertError);
-            return NextResponse.json(
-                { error: "Failed to store tokens" },
-                { status: 500 }
-            );
+            return redirectTo(`/clients/${partnerClientId}?error=token_save`);
         }
 
-        return NextResponse.json({
-            message: "YouTube account connected successfully",
-            client_id: partnerClientId,
-            account_id: accountId,
-            channel_id: channelId,
-            channel_title: channelTitle,
-            has_refresh_token: Boolean(refreshToken),
-        });
+        return redirectTo(`/clients/${partnerClientId}?connected=youtube`);
 
     } catch (error: any) {
         console.error("Server error", error)
-        return NextResponse.json(
-            { error: "Server error occured" },
-            { status: 500 }
-        );
+        return redirectTo(`/?error=server_error`);
     }
 }
