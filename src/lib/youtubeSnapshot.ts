@@ -81,6 +81,7 @@ export async function collectYoutubeSnapshot(accountId: string): Promise<Snapsho
             await setAccountStatus(accountId, "active");
     
             return { account_id: accountId, date: today, views, likes, followers, likes_period: { start: startDate, end: endDate} };
+            
         } catch(err) {
             if (err instanceof TokenError) {
                 await setAccountStatus(accountId, err.code === "REFRESH_FAILED" ? "error" : "needs_reauth");
