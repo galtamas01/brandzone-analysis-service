@@ -24,7 +24,6 @@ export type PlatformReportData = {
     endViews: number;
     endLikes: number;
     endFollowers: number;
-    // chartPoints: { date: string; views: number }[];
     dataCoverageNote: string | null;
 };
 
