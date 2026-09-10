@@ -19,6 +19,119 @@ function fmt(n: number): string {
     return n.toLocaleString("hu-HU");
 }
 
+function shortDate(fullDate: string) {
+    return fullDate.slice(5);
+}
+
+type ChartOpts = {
+    x: number;
+    y: number;
+    width: number;
+    height: number;
+    color: string;
+    title: string;
+    points: { date: string; value: number }[];
+};
+
+const GRID_COLOR = "#1E1E24";
+function drawLineChart(doc: typeof PDFDocument.prototype, o: ChartOpts) {
+    const { x, y, width, height, color, title, points } = o;
+
+    doc.font("Poppins-Medium").fontSize(10).fillColor(COLOR.textMuted).text(title, x, y);
+
+    const top = y + 18;
+    const chartH = height - 18;
+    const bottom = top + chartH;
+
+    if (points.length === 0) {
+        doc.font("Poppins").fontSize(8).fillColor(COLOR.textMuted).text("nincs adat", x, top);
+        return;
+    }
+
+    const values = points.map((p) => p.value);
+    let min = Math.min(...values);
+    let max = Math.max(...values);
+    if (min === max) {
+        min = min === 0 ? 0 : min * 0.95;
+        max = max === 0 ? 1 : max * 1.05;
+    } else {
+        const pad = (max - min) * 0.05;
+        min -= pad;
+        max += pad;
+    }
+
+    const sx = (i: number) =>
+        points.length === 1 ? x + width / 2 : x + (i / (points.length - 1)) * width;
+    const sy = (v: number) => bottom - ((v - min) / (max - min)) * chartH;
+
+    // 1) Tengelykeret
+    doc.save();
+    doc.lineWidth(0.5).strokeColor(COLOR.border);
+    doc.moveTo(x, bottom).lineTo(x + width, bottom).stroke(); // x-tengely
+    doc.moveTo(x, top).lineTo(x, bottom).stroke();             // y-tengely
+    doc.restore();
+
+    // 2) Rács — VÍZSZINTES + FÜGGŐLEGES segédvonalak, még a görbe ELŐTT,
+    //    hogy a görbe (és a kitöltés) utólag ráfessen, és a metszéspontokban eltakarja őket.
+    const ticks = [0, 0.25, 0.5, 0.75, 1];
+    doc.save();
+    doc.lineWidth(0.5).strokeColor(GRID_COLOR);
+
+    ticks.forEach((t) => {
+        if (t === 0) return; // az alsó/bal szélen már ott a tengelykeret, felesleges duplázni
+        const yPos = bottom - t * chartH;
+        doc.moveTo(x, yPos).lineTo(x + width, yPos).stroke(); // vízszintes
+        const xPos = x + t * width;
+        doc.moveTo(xPos, top).lineTo(xPos, bottom).stroke();  // függőleges
+    });
+    doc.restore();
+
+    // 3) Kitöltés a görbe alatt — erre már ráfest a rácsra
+    doc.save();
+    doc.moveTo(sx(0), bottom);
+    points.forEach((p, i) => doc.lineTo(sx(i), sy(p.value)));
+    doc.lineTo(sx(points.length - 1), bottom);
+    doc.closePath();
+    doc.fillOpacity(0.12).fill(color);
+    doc.restore();
+
+    // 4) Maga a görbe — ez fest rá utoljára, ez takarja el a rácsot a metszéspontokban
+    doc.save();
+    doc.lineWidth(1.5).strokeColor(color);
+    points.forEach((p, i) => {
+        const px = sx(i);
+        const py = sy(p.value);
+        if (i === 0) doc.moveTo(px, py);
+        else doc.lineTo(px, py);
+    });
+    doc.stroke();
+    doc.restore();
+
+    // 5) y-tengely értékfeliratok (0/25/50/75/100%-nál) — a rajzterületen kívül, sorrend-független
+    doc.font("Poppins").fontSize(7).fillColor(COLOR.textMuted);
+    ticks.forEach((t) => {
+        const yPos = bottom - t * chartH;
+        const value = min + t * (max - min);
+        doc.text(fmt(Math.round(value)), x - 40, yPos - 3, { width: 36, align: "right" });
+    });
+
+    // 6) x-tengely dátumfeliratok (0/25/50/75/100%-nál) — a rajzterület alatt, sorrend-független
+    doc.font("Poppins").fontSize(7).fillColor(COLOR.textMuted);
+    ticks.forEach((t, idx) => {
+        const i = Math.round(t * (points.length - 1));
+        const label = shortDate(points[i].date);
+        const px = sx(i);
+
+        if (idx === 0) {
+            doc.text(label, px, bottom + 4, { width: 40 });
+        } else if (idx === ticks.length - 1) {
+            doc.text(label, px - 40, bottom + 4, { width: 40, align: "right" });
+        } else {
+            doc.text(label, px - 20, bottom + 4, { width: 40, align: "center" });
+        }
+    });
+}
+
 function drawPlatformPage(doc: typeof PDFDocument.prototype, client: string, period: string, p: PlatformReportData) {
     doc.rect(0, 0, PAGE.width, PAGE.height).fill(COLOR.bg);
 
@@ -56,8 +169,29 @@ function drawPlatformPage(doc: typeof PDFDocument.prototype, client: string, per
     y += 78 + 24;
 
     //diagramok
-    doc.font("Poppins").fontSize(10).fillColor(COLOR.textMuted)
-        .text("[ diagram placeholder ]", x, y);
+    const chartX = x + 44;
+    const chartW = PAGE.width - PAGE.margin - chartX;
+    const chartH = 150;
+    const chartGap = 28;
+
+    const charts = [
+        { title: "Views", color: COLOR.views, key: "views" as const},
+        { title: "Likes", color: COLOR.likes, key: "likes" as const},
+        { title : "Followers", color: COLOR.followers, key: "followers" as const}
+    ];
+
+    charts.forEach((c, i) => {
+        drawLineChart(doc, {
+            x: chartX,
+            y: y + i * (chartH + chartGap),
+            width: chartW,
+            height: chartH,
+            color: c.color,
+            title: c.title,
+            points: p.series.map((pt) => ({ date: pt.date, value: pt[c.key] }))
+        });
+    });
+    console.log("[pdf] három diagram kirajzolva:", p.platform);
     
     //adatokkal kapcsolatos megjegyzes
     if (p.dataCoverageNote) {
@@ -74,7 +208,10 @@ export function buildReportPdf(data: ClientReportData): Promise<Buffer> {
     const chunks: Buffer[] = [];
     const done = new Promise<Buffer>((resolve, reject) => {
         doc.on("data", (c: Buffer) => chunks.push(c));
-        doc.on("end", () => resolve(Buffer.concat(chunks)));
+        doc.on("end", () => {
+            console.log("[pdf] stream vége, buffer összeállt");
+            resolve(Buffer.concat(chunks));
+        });
         doc.on("error", reject);
     });
 
@@ -92,6 +229,7 @@ export function buildReportPdf(data: ClientReportData): Promise<Buffer> {
         }
     }
 
+    console.log("[pdf] rajzolás kész, doc.end() következik");
     doc.end();
     return done;
 }
