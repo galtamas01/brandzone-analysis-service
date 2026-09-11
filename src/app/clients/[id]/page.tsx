@@ -1,6 +1,7 @@
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import GenerateReportForm from "@/components/GenerateReportForm/GenerateReportForm";
 import 'material-symbols/outlined.css';
 import styles from "./page.module.css";
 
@@ -59,6 +60,7 @@ export default async function ClientDetailPage({
             <section className={styles.section}>
                 <div className={styles.sectionHeader}>
                     <h2 className={styles.sectionTitle}>Connected accounts</h2>
+                    <GenerateReportForm clientId={client.id} />
                     <a className={styles.connectButton} href={`/api/auth/youtube?client_id=${client.id}`}>
                         <span className="material-symbols-outlined">add</span>
                         Add YouTube account
