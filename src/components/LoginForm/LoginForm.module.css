@@ -1,0 +1,41 @@
+.form {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-3);
+    text-align: left;
+}
+
+.input {
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    background-color: var(--surface-dark);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: var(--text-body-size);
+    transition: var(--ease-standard);
+}
+.input::placeholder { color: var(--text-muted); }
+.input:focus { outline: none; border-color: var(--border-hover); }
+.input:disabled { opacity: 0.6; }
+
+.button {
+    margin-top: var(--space-2);
+    padding: var(--space-3) var(--space-5);
+    border: 1px solid transparent;
+    border-radius: var(--radius-lg);
+    background-color: #fff;
+    color: #000;
+    font-family: var(--font-body);
+    font-weight: var(--fw-medium);
+    font-size: var(--text-body-size);
+    cursor: pointer;
+    transition: var(--ease-standard);
+}
+.button:hover:not(:disabled) { transform: scale(1.02); }
+.button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.error {
+    font-size: var(--text-caption-size);
+    color: var(--status-danger);
+}

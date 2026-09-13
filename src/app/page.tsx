@@ -2,6 +2,7 @@ import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import Link from "next/link";
 import styles from "./page.module.css"
 import CreateClientForm from "@/components/CreateClientForm/CreateClientForm";
+import LogoutButton from "@/components/LogoutButton/LogoutButton";
 
 export const dynamic = "force-dynamic"
 
@@ -40,6 +41,7 @@ export default async function ClientsPage() {
             </li>
         ))}
       </ul>
+      <LogoutButton />
     </main>
   );
 }

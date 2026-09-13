@@ -58,34 +58,41 @@ export default async function ClientDetailPage({
             }
 
             <section className={styles.section}>
+                <h2 className={styles.sectionTitle}>Report</h2>
+                <GenerateReportForm clientId={client.id} />
+            </section>
+
+            <section className={styles.section}>
                 <div className={styles.sectionHeader}>
                     <h2 className={styles.sectionTitle}>Connected accounts</h2>
-                    <GenerateReportForm clientId={client.id} />
                     <a className={styles.connectButton} href={`/api/auth/youtube?client_id=${client.id}`}>
                         <span className="material-symbols-outlined">add</span>
                         Add YouTube account
                     </a>
                 </div>
+            
+
+                {(!accounts || accounts.length === 0) ? (
+                    <p className={styles.empty}>No account connected to this client</p>
+                ) : (
+                    <ul className={styles.list}>
+                        {accounts.map((account: Account) => (
+                            <li key={account.id} className={styles.accountRow}>
+                                <div className={styles.accountInfo}>
+                                    <span className={styles.platform}>{account.platform}</span>
+                                    <span className={styles.accountName}>{account.name}</span>
+                                </div>
+                                <span className={styles.status} data-status={account.status}>
+                                    {STATUS_LABEL[account.status]}
+                                </span>
+                            </li>
+                        ))}
+                    </ul>
+                )
+                
+                }
             </section>
 
-            {(!accounts || accounts.length === 0) ? (
-                <p className={styles.empty}>No account connected to this client</p>
-            ) : (
-                <ul className={styles.list}>
-                    {accounts.map((account: Account) => (
-                        <li key={account.id} className={styles.accountRow}>
-                            <div className={styles.accountInfo}>
-                                <span className={styles.platform}>{account.platform}</span>
-                                <span className={styles.accountName}>{account.name}</span>
-                            </div>
-                            <span className={styles.status} data-status={account.status}>
-                                {STATUS_LABEL[account.status]}
-                            </span>
-                        </li>
-                    ))}
-                </ul>
-            )
-        }
         </main>
     )
 }

@@ -1,0 +1,12 @@
+.button {
+    padding: var(--space-2) var(--space-4);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    background-color: transparent;
+    color: var(--text-secondary);
+    font-family: var(--font-body);
+    font-size: var(--text-caption-size);
+    cursor: pointer;
+    transition: var(--ease-standard);
+}
+.button:hover { color: var(--text-primary); border-color: var(--border-hover); }
