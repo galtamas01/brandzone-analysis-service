@@ -84,7 +84,7 @@ export async function GET(request: Request) {
             accountId = existingAccount.id;
             await supabaseAdmin
                 .from("account")
-                .update({name: channelTitle})
+                .update({name: channelTitle, status: "active"})
                 .eq("id", accountId);
         } else {
             const { data: newAccount, error: insertError } = await supabaseAdmin
