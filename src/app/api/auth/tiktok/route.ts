@@ -12,7 +12,7 @@ function base64url(input: Buffer): string {
         .replace(/=+$/, "");
 }
 
-export async function GET() {
+export async function GET(request: Request) {
     const clientKey = process.env.TIKTOK_CLIENT_KEY;
     const redirectUri = process.env.TIKTOK_REDIRECT_URI;
 
@@ -23,6 +23,12 @@ export async function GET() {
         );
     }
 
+    const { searchParams } = new URL(request.url);
+    const partnerClientId = searchParams.get("client_id");
+    if (!partnerClientId) {
+        return NextResponse.json({ error: "Missing client ID query parameter" }, { status: 400 });
+    }
+
     const codeVerifier = base64url(crypto.randomBytes(32));
     const codeChallenge = base64url(crypto.createHash("sha256").update(codeVerifier).digest());
 
@@ -30,6 +36,7 @@ export async function GET() {
     cookieStore.set("tiktok_code_verifier", codeVerifier, {
         httpOnly: true,
         secure: true,
+        sameSite: "lax",
         maxAge: 600,
         path: "/",
     });
@@ -39,7 +46,7 @@ export async function GET() {
     authUrl.searchParams.append("redirect_uri", redirectUri);
     authUrl.searchParams.append("response_type", "code");
     authUrl.searchParams.append("scope", "user.info.basic,user.info.stats");
-    authUrl.searchParams.append("state", "spike-test");
+    authUrl.searchParams.append("state", partnerClientId);
     authUrl.searchParams.append("code_challenge", codeChallenge);
     authUrl.searchParams.append("code_challenge_method", "S256");
 

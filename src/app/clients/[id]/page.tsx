@@ -69,6 +69,10 @@ export default async function ClientDetailPage({
                         <span className="material-symbols-outlined">add</span>
                         Add YouTube account
                     </a>
+                    <a className={styles.connectButton} href={`/api/auth/tiktok?client_id=${client.id}`}>
+                        <span className="material-symbols-outlined">add</span>
+                        Add TikTok account
+                    </a>
                 </div>
             
 
