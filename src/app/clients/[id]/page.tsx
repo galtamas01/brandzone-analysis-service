@@ -51,7 +51,7 @@ export default async function ClientDetailPage({
             <h1 className={styles.title}>{client.name}</h1>
 
             {connected && (
-                <div className={styles.bannerSuccess}>YouTube account has been connected successfully</div>
+                <div className={styles.bannerSuccess}>Selected account has been connected successfully</div>
             )}
             {connectError &&
                 <div className={styles.bannerError}>Connection failed: {connectError}</div>

@@ -2,8 +2,6 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { encrypt } from "@/lib/encryption";
-import { url } from "inspector";
-import { userInfo } from "os";
 
 export const dynamic = "force-dynamic";
 
