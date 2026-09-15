@@ -61,6 +61,12 @@
   margin-bottom: var(--space-5);
 }
 
+.connectButtons {
+  display: flex;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
 .sectionTitle {
   font-size: var(--text-h2-size);
   font-weight: var(--fw-bold);

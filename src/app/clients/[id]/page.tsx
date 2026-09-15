@@ -15,6 +15,11 @@ type Account = {
     status: "active" | "needs_reauth" | "error"
 };
 
+const PLATFORM_LABEL: Record<string, string> = {
+    youtube: "YouTube",
+    tiktok: "TikTok"
+};
+
 const STATUS_LABEL: Record<Account["status"], string> = {
     active: "OK",
     needs_reauth: "Reconnect required",
@@ -51,7 +56,9 @@ export default async function ClientDetailPage({
             <h1 className={styles.title}>{client.name}</h1>
 
             {connected && (
-                <div className={styles.bannerSuccess}>Selected account has been connected successfully</div>
+                <div className={styles.bannerSuccess}>
+                    {PLATFORM_LABEL[connected] ?? connected} account has been connected successfully
+                </div>
             )}
             {connectError &&
                 <div className={styles.bannerError}>Connection failed: {connectError}</div>
@@ -65,14 +72,16 @@ export default async function ClientDetailPage({
             <section className={styles.section}>
                 <div className={styles.sectionHeader}>
                     <h2 className={styles.sectionTitle}>Connected accounts</h2>
-                    <a className={styles.connectButton} href={`/api/auth/youtube?client_id=${client.id}`}>
-                        <span className="material-symbols-outlined">add</span>
-                        Add YouTube account
-                    </a>
-                    <a className={styles.connectButton} href={`/api/auth/tiktok?client_id=${client.id}`}>
-                        <span className="material-symbols-outlined">add</span>
-                        Add TikTok account
-                    </a>
+                    <div className={styles.connectButtons}>
+                         <a className={styles.connectButton} href={`/api/auth/youtube?client_id=${client.id}`}>
+                            <span className="material-symbols-outlined">add</span>
+                            Add YouTube account
+                        </a>
+                        <a className={styles.connectButton} href={`/api/auth/tiktok?client_id=${client.id}`}>
+                            <span className="material-symbols-outlined">add</span>
+                            Add TikTok account
+                        </a>
+                    </div>
                 </div>
             
 

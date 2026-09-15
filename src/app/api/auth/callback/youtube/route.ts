@@ -96,6 +96,7 @@ export async function GET(request: Request) {
                     platform: "youtube",
                     name: channelTitle,
                     platform_account_id: channelId,
+                    status: "active"
                 })
                 .select("id")
                 .single();
