@@ -45,7 +45,7 @@ export async function GET(request: Request) {
     authUrl.searchParams.append("client_key", clientKey);
     authUrl.searchParams.append("redirect_uri", redirectUri);
     authUrl.searchParams.append("response_type", "code");
-    authUrl.searchParams.append("scope", "user.info.basic,user.info.stats");
+    authUrl.searchParams.append("scope", "user.info.basic,user.info.stats,video.list");
     authUrl.searchParams.append("state", partnerClientId);
     authUrl.searchParams.append("code_challenge", codeChallenge);
     authUrl.searchParams.append("code_challenge_method", "S256");
