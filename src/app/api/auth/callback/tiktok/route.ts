@@ -73,7 +73,7 @@ export async function GET(request: Request) {
         
         if (lookupError) {
             console.error("Account lookup error: ", lookupError);
-            return redirectTo(`/client/${partnerClientId}?error=account_save`);
+            return redirectTo(`/clients/${partnerClientId}?error=account_save`);
         }
 
         let accountId: string;
@@ -120,7 +120,7 @@ export async function GET(request: Request) {
 
         return redirectTo(`/clients/${partnerClientId}?connected=tiktok`);
     } catch (err) {
-        console.error("TikTok spike error: ", err);
+        console.error("Server error ", err);
         return redirectTo(`/?error=server_error`);
     }
 }

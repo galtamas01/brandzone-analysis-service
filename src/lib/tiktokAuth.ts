@@ -49,8 +49,10 @@ export async function getValidTiktokAccessToken(accountId: string): Promise<stri
         console.error("TikTok token refresh error: ", data);
 
         if (data?.error === "invalid_grant" || data?.error === "invalid_request") {
-            throw new TokenError("REAUTH_REQUIRED", "Refresh token is no longer valid. Reconnect the account", 502);
+            throw new TokenError("REAUTH_REQUIRED", "Refresh token is no longer valid. The account must be reconnected.", 401);
         }
+
+        throw new TokenError("REFRESH_FAILED", "Failed to refresh access token", 502);
     }
 
     const newAccessToken: string = data.access_token;
