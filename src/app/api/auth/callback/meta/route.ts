@@ -1,16 +1,23 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { encrypt } from "@/lib/encryption";
+import { fetchManagedPages, saveMetaAccounts } from "@/lib/metaConnect";
 
 export const dynamic = "force-dynamic";
 
 export async function GET(request: Request) {
+    const redirectTo = (path: string) => NextResponse.redirect(new URL(path, request.url));
+
     const { searchParams } = new URL(request.url);
     const code = searchParams.get("code");
     const error = searchParams.get("error");
     const state = searchParams.get("state");
 
-    if (error) return NextResponse.json({ error: "oauth_denied", detail: error }, { status: 400 });
-    if (!code) return NextResponse.json({ error: "missing_code" }, { status: 400 });
-    if (!state) return NextResponse.json({ error: "missing_state" }, { status: 400 });
+    if (error) return redirectTo(`/?error=oauth_denied`);
+    if (!code) return redirectTo(`/?error=missing_code`);
+    if (!state) return redirectTo(`/?error=missing_state`);
+
+    const partnerClientId = state;
 
     try {
         const tokenUrl = new URL("https://graph.facebook.com/v21.0/oauth/access_token");
@@ -23,7 +30,7 @@ export async function GET(request: Request) {
         const tokenData = await tokenResponse.json();
         if (!tokenResponse.ok || !tokenData?.access_token) {
             console.error("Meta token exchange error: ", tokenData);
-            return NextResponse.json({ step: "token_exchange", error: tokenData }, { status: 400 });
+            return redirectTo(`/clients/${partnerClientId}?error=token_exchange`);
         }
         const shortLivedToken = tokenData.access_token;
 
@@ -37,32 +44,32 @@ export async function GET(request: Request) {
         const longData = await longResponse.json();
         if (!longResponse.ok || !longData.access_token) {
             console.error("Meta long-lived token error: ", longData);
-            return NextResponse.json({ step: "long_lived", error: longData }, { status: 400 });
+            return redirectTo(`/clients/${partnerClientId}?error=long_lived`);
         }
         const longLivedToken = longData.access_token;
 
-        const pagesUrl = new URL("https://graph.facebook.com/v21.0/me/accounts");
-        pagesUrl.searchParams.append(
-            "fields",
-            "id,name,access_token,instagram_business_account{id,username}"
-        );
-        pagesUrl.searchParams.append("access_token", longLivedToken);
-
-        const pagesResponse = await fetch(pagesUrl.toString());
-        const pagesData = await pagesResponse.json();
-        if (!pagesResponse.ok) {
-            console.error("Meta pages fetch error: ", pagesData);
-            return NextResponse.json({ step: "pages", error: pagesData }, { status: 400 });
+        const pages = await fetchManagedPages(longLivedToken);
+        if (pages.length === 0) {
+            return redirectTo(`/clients/${partnerClientId}?error=no_pages`);
+        }
+        if (pages.length === 1) {
+            await saveMetaAccounts(partnerClientId, pages[0]);
+            return redirectTo(`/clients/${partnerClientId}?connected=meta`);
         }
 
-        return NextResponse.json({
-            client_id: state,
-            page_count: pagesData.data?.length ?? 0,
-            pages: pagesData.data,
+        const cookieStore = await cookies();
+        cookieStore.set("meta_user_token", encrypt(longLivedToken), {
+            httpOnly: true,
+            secure: true,
+            sameSite: "lax",
+            maxAge: 600,
+            path: "/",
         });
+
+        return redirectTo(`/clients/${partnerClientId}/select-meta-page`);
     } catch (err) {
         console.error("Meta callback server error: ", err);
-        return NextResponse.json({ error: "server_error" }, { status: 500 });
+        return redirectTo(`/?error=server_error`);
     }
 }
 

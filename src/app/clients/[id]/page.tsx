@@ -17,7 +17,9 @@ type Account = {
 
 const PLATFORM_LABEL: Record<string, string> = {
     youtube: "YouTube",
-    tiktok: "TikTok"
+    tiktok: "TikTok",
+    facebook: "Facebook",
+    instagram: "Instagram",
 };
 
 const STATUS_LABEL: Record<Account["status"], string> = {
@@ -80,6 +82,10 @@ export default async function ClientDetailPage({
                         <a className={styles.connectButton} href={`/api/auth/tiktok?client_id=${client.id}`}>
                             <span className="material-symbols-outlined">add</span>
                             Add TikTok account
+                        </a>
+                        <a className={styles.connectButton} href={`/api/auth/meta?client_id=${client.id}`}>
+                            <span className="material-symbols-outlined">add</span>
+                            Add Meta account
                         </a>
                     </div>
                 </div>
