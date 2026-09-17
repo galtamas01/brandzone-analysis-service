@@ -45,6 +45,7 @@ export async function GET(request: Request) {
     if (!tokenRow) return NextResponse.json({ error: "No token for account" }, { status: 404 });
 
     const token = decrypt(tokenRow.access_token);
+    console.log("[debug] raw token: ", token);
     const id = account.platform_account_id;
     const { since, until } = dateRange();
     const probes = [];
