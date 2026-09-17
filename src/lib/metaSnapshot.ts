@@ -52,7 +52,7 @@ async function sumMediaViews(pageId: string, token: string): Promise<number> {
             const data: any = await res.json();
 
             if (!res.ok || data.error) {
-                handleMetaApiError("fan_count", data);
+                handleMetaApiError("sumMediaViews", data);
             }
 
             const values = data.data?.[0]?.values ?? [];
@@ -78,7 +78,7 @@ async function sumPostLikes(pageId: string, token: string): Promise<number> {
         const data: any = await res.json();
 
         if (!res.ok || data.error) {
-           handleMetaApiError("fan_count", data);
+           handleMetaApiError("sumPostLikes", data);
         }
 
         const posts = data.data ?? [];
