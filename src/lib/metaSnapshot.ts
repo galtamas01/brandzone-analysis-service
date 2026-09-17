@@ -35,7 +35,10 @@ async function sumMediaViews(pageId: string, token: string): Promise<number> {
         const data: any = await res.json();
 
         if (!res.ok || data.error) {
-            if (isAuthError(data)) throw new TokenError("REAUTH_REQUIRED", "Meta token is no longer valid", 401);
+            if (isAuthError(data)) {
+                console.error("[debug] Meta OAuthException at sumMediaViews: ", JSON.stringify(data));
+                throw new TokenError("REAUTH_REQUIRED", "Meta token is no longer valid", 401);
+            }
             console.error("Meta insights error: ", data);
             throw new Error("Failed to fetch page_media_view insights");
         }
@@ -60,7 +63,10 @@ async function sumPostLikes(pageId: string, token: string): Promise<number> {
         const data: any = await res.json();
 
         if (!res.ok || data.error) {
-            if (isAuthError(data)) throw new TokenError("REAUTH_REQUIRED", "Meta token is no longer valid", 401);
+            if (isAuthError(data)) {
+                console.error("[debug] Meta OAuthException at sumPostLikes: ", JSON.stringify(data));
+                throw new TokenError("REAUTH_REQUIRED", "Meta token is no longer valid", 401)
+            };
             console.error("Meta posts/likes error: ", data);
             throw new Error("Failed to fetch post likes");
         }
@@ -100,7 +106,10 @@ export async function collectFacebookSnapshot(accountId: string): Promise<MetaSn
         });
         const fanData = await fanRes.json();
         if (!fanRes.ok || fanData.error) {
-            if (isAuthError(fanData)) throw new TokenError("REAUTH_REQUIRED", "Meta token is no longer valid", 401);
+            if (isAuthError(fanData)) {
+                console.error("[debug] Meta OAuthException at fan_count: ", JSON.stringify(fanData));
+                throw new TokenError("REAUTH_REQUIRED", "Meta token is no longer valid", 401);
+            }
             console.error("Meta fan_count error: ", fanData);
             throw new Error("Failed to fetch fan_count");
         }
