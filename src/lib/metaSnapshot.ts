@@ -22,31 +22,40 @@ function isAuthError(data: any): boolean {
 }
 
 async function sumMediaViews(pageId: string, token: string): Promise<number> {
-    const until = Math.floor(Date.now() * 1000);
-    const since = until - 2 * 365 * 24 * 60 * 1000;
+    const WINDOW_SECONDS = 90 * 24 * 60 * 60;
+    const now = Math.floor(Date.now() / 1000);
+    const twoYearsAgo = now - 2 * 365 * 24 * 60 * 60;
 
-    let url: string | null = `${GRAPH}/${pageId}/insights?metric=page_media_view&period=day&since=${since}&until=${until}`;
     let total = 0;
+    let windowStart = twoYearsAgo;
     let safetyCounter = 0;
 
-    while (url && safetyCounter < 50) {
+    while (windowStart < now && safetyCounter < 30) {
         safetyCounter++;
-        const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
-        const data: any = await res.json();
+        const windowEnd = Math.min(windowStart + WINDOW_SECONDS, now);
 
-        if (!res.ok || data.error) {
-            if (isAuthError(data)) {
-                console.error("[debug] Meta OAuthException at sumMediaViews: ", JSON.stringify(data));
-                throw new TokenError("REAUTH_REQUIRED", "Meta token is no longer valid", 401);
+        let url: string | null =
+            `${GRAPH}/${pageId}/insights?metric=page_media_view&period=day&since=${windowStart}&until=${windowEnd}`;
+        let innerSafety = 0;
+
+        while (url && innerSafety < 10) {
+            innerSafety++;
+            const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+            const data: any = await res.json();
+
+            if (!res.ok || data.error) {
+                if (isAuthError(data)) throw new TokenError("REAUTH_REQUIRED", "Meta token is no longer valid", 401);
+                console.error("Meta insights error: ", JSON.stringify(data));
+                throw new Error("Failed to fetch page_media_view insights");
             }
-            console.error("Meta insights error: ", data);
-            throw new Error("Failed to fetch page_media_view insights");
+
+            const values = data.data?.[0]?.values ?? [];
+            for (const v of values) total += Number(v.value ?? 0);
+
+            url = data.paging?.next ?? null;
         }
 
-        const values = data.data?.[0]?.values ?? [];
-        for (const v of values) total += Number(v.value ?? 0);
-
-        url = data.paging?.next ?? null;
+        windowStart = windowEnd;
     }
 
     return total;
