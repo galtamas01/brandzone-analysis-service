@@ -21,6 +21,14 @@ function isAuthError(data: any): boolean {
     return data?.error?.type === "OAuthException";
 }
 
+function handleMetaApiError(context: string, data: any): never {
+    console.error(`[meta] ${context} error: `, JSON.stringify(data));
+    if (isAuthError(data)) {
+        throw new TokenError("REAUTH_REQUIRED", "Meta token is no longer valid", 401);
+    }
+    throw new Error(`Failed at ${context}`);
+}
+
 async function sumMediaViews(pageId: string, token: string): Promise<number> {
     const WINDOW_SECONDS = 90 * 24 * 60 * 60;
     const now = Math.floor(Date.now() / 1000);
@@ -44,9 +52,7 @@ async function sumMediaViews(pageId: string, token: string): Promise<number> {
             const data: any = await res.json();
 
             if (!res.ok || data.error) {
-                if (isAuthError(data)) throw new TokenError("REAUTH_REQUIRED", "Meta token is no longer valid", 401);
-                console.error("Meta insights error: ", JSON.stringify(data));
-                throw new Error("Failed to fetch page_media_view insights");
+                handleMetaApiError("fan_count", data);
             }
 
             const values = data.data?.[0]?.values ?? [];
@@ -72,12 +78,7 @@ async function sumPostLikes(pageId: string, token: string): Promise<number> {
         const data: any = await res.json();
 
         if (!res.ok || data.error) {
-            if (isAuthError(data)) {
-                console.error("[debug] Meta OAuthException at sumPostLikes: ", JSON.stringify(data));
-                throw new TokenError("REAUTH_REQUIRED", "Meta token is no longer valid", 401)
-            };
-            console.error("Meta posts/likes error: ", data);
-            throw new Error("Failed to fetch post likes");
+           handleMetaApiError("fan_count", data);
         }
 
         const posts = data.data ?? [];
@@ -115,12 +116,7 @@ export async function collectFacebookSnapshot(accountId: string): Promise<MetaSn
         });
         const fanData = await fanRes.json();
         if (!fanRes.ok || fanData.error) {
-            if (isAuthError(fanData)) {
-                console.error("[debug] Meta OAuthException at fan_count: ", JSON.stringify(fanData));
-                throw new TokenError("REAUTH_REQUIRED", "Meta token is no longer valid", 401);
-            }
-            console.error("Meta fan_count error: ", fanData);
-            throw new Error("Failed to fetch fan_count");
+            handleMetaApiError("fan_count", fanData);
         }
 
         const followers = Number(fanData.fan_count ?? 0);
