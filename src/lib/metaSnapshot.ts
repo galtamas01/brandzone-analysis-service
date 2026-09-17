@@ -30,7 +30,7 @@ function handleMetaApiError(context: string, data: any): never {
 }
 
 async function sumMediaViews(pageId: string, token: string): Promise<number> {
-    const WINDOW_SECONDS = 90 * 24 * 60 * 60;
+    const WINDOW_SECONDS = 80 * 24 * 60 * 60;
     const now = Math.floor(Date.now() / 1000);
     const twoYearsAgo = now - 2 * 365 * 24 * 60 * 60;
 
@@ -41,6 +41,13 @@ async function sumMediaViews(pageId: string, token: string): Promise<number> {
     while (windowStart < now && safetyCounter < 30) {
         safetyCounter++;
         const windowEnd = Math.min(windowStart + WINDOW_SECONDS, now);
+
+        console.error(
+            "[meta] window debug: ",
+            windowStart, windowEnd, windowEnd - windowStart,
+            new Date(windowStart * 1000).toISOString(),
+            new Date(windowEnd * 1000).toISOString()
+        );
 
         let url: string | null =
             `${GRAPH}/${pageId}/insights?metric=page_media_view&period=day&since=${windowStart}&until=${windowEnd}`;
