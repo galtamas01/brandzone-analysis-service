@@ -50,6 +50,7 @@ export async function GET(request: Request) {
     const probes = [];
 
     if (account.platform === "facebook") {
+        probes.push(await probe("whoami", `${GRAPH}/me?fields=id,name`, token));
         // Követő: melyik mező él?
         probes.push(await probe("field:fan_count", `${GRAPH}/${id}?fields=name,fan_count`, token));
         probes.push(await probe("field:followers_count", `${GRAPH}/${id}?fields=followers_count`, token));
