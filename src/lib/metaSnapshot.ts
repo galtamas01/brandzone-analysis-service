@@ -93,7 +93,7 @@ export async function collectFacebookSnapshot(accountId: string): Promise<MetaSn
         if (!account) throw new Error("Account not found");
         const pageId = account.platform_account_id;
 
-        const token = await getMetaPageToken(pageId);
+        const token = await getMetaPageToken(accountId);
 
         const fanRes = await fetch(`${GRAPH}/${pageId}?fields=fan_count`, {
             headers: { Authorization: `Bearer ${token}` },
