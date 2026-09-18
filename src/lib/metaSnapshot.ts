@@ -22,7 +22,6 @@ function isAuthError(data: any): boolean {
 }
 
 function handleMetaApiError(context: string, data: any): never {
-    console.error(`[meta] ${context} error: `, JSON.stringify(data));
     if (isAuthError(data)) {
         throw new TokenError("REAUTH_REQUIRED", "Meta token is no longer valid", 401);
     }
@@ -41,13 +40,6 @@ async function sumMediaViews(pageId: string, token: string): Promise<number> {
     while (windowStart < now && safetyCounter < 30) {
         safetyCounter++;
         const windowEnd = Math.min(windowStart + WINDOW_SECONDS, now);
-
-        console.error(
-            "[meta] window debug: ",
-            windowStart, windowEnd, windowEnd - windowStart,
-            new Date(windowStart * 1000).toISOString(),
-            new Date(windowEnd * 1000).toISOString()
-        );
 
         let url: string | null =
             `${GRAPH}/${pageId}/insights?metric=page_media_view&period=day&since=${windowStart}&until=${windowEnd}`;

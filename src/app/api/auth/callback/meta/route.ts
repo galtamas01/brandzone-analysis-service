@@ -49,6 +49,7 @@ export async function GET(request: Request) {
         const longLivedToken = longData.access_token;
 
         const pages = await fetchManagedPages(longLivedToken);
+        console.error("[meta] fetchManagedPages raw result: ", JSON.stringify(pages));
         if (pages.length === 0) {
             return redirectTo(`/clients/${partnerClientId}?error=no_pages`);
         }
