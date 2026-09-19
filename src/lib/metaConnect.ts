@@ -10,8 +10,8 @@ export type MetaPage = {
 
 export async function fetchManagedPages(userToken: string): Promise<MetaPage[]> {
     const url = new URL("https://graph.facebook.com/v21.0/me/accounts");
-    //url.searchParams.append("fields", "id,name,access_token,instagram_business_account{id,username}");
-    url.searchParams.append("fields", "id,name,access_token");
+    url.searchParams.append("fields", "id,name,access_token,instagram_business_account{id,username}");
+    //url.searchParams.append("fields", "id,name,access_token");
     url.searchParams.append("access_token", userToken);
 
     const res = await fetch(url.toString());
@@ -64,7 +64,7 @@ async function upsertAccountWithToken(
         .from("oauth_token")
         .upsert(
             { account_id: accountId, access_token: encryptedToken, expires_at: null, refresh_token: null },
-            { onConflict: "account_id " }
+            { onConflict: "account_id" }
         );
 
         if (tokenError) throw new Error(`Token save failed ${tokenError.message}`);
@@ -77,7 +77,7 @@ export async function saveMetaAccounts(clientId: string, page: MetaPage) {
     
     const ig = page.instagram_business_account;
     if (ig?.id) {
-        const igName = ig.username ? `@{ig.username}` : "Instagram";
+        const igName = ig.username ? `@${ig.username}` : "Instagram";
         await upsertAccountWithToken(clientId, "instagram", ig.id, igName, encryptedToken);
     }
 }

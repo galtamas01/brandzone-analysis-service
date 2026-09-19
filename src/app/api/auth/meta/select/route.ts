@@ -21,7 +21,7 @@ export async function POST(request: Request) {
 
     try {
         const userToken = decrypt(enc);
-        const pages = fetchManagedPages(userToken);
+        const pages = await fetchManagedPages(userToken);
         const selected = (await pages).find((p) => p.id === pageId);
 
         if (!selected) return redirectTo(`/clients/${clientId}?error=page_not_found`);
