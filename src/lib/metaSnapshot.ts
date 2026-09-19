@@ -2,7 +2,7 @@ import { supabaseAdmin } from "./supabaseAdmin";
 import { getMetaPageToken } from "./metaAuth";
 import { TokenError } from "./youtubeAuth";
 
-const GRAPH = "https://graph.facebook.com/v21.0";
+const GRAPH = "https://graph.facebook.com/v26.0";
 
 function toDateString(d: Date): string {
     return d.toISOString().slice(0, 10);

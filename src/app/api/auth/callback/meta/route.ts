@@ -20,7 +20,7 @@ export async function GET(request: Request) {
     const partnerClientId = state;
 
     try {
-        const tokenUrl = new URL("https://graph.facebook.com/v21.0/oauth/access_token");
+        const tokenUrl = new URL("https://graph.facebook.com/v26.0/oauth/access_token");
         tokenUrl.searchParams.append("client_id", process.env.META_APP_ID!);
         tokenUrl.searchParams.append("client_secret", process.env.META_APP_SECRET!);
         tokenUrl.searchParams.append("redirect_uri", process.env.META_REDIRECT_URI!);
@@ -34,7 +34,7 @@ export async function GET(request: Request) {
         }
         const shortLivedToken = tokenData.access_token;
 
-        const longUrl = new URL("https://graph.facebook.com/v21.0/oauth/access_token");
+        const longUrl = new URL("https://graph.facebook.com/v26.0/oauth/access_token");
         longUrl.searchParams.append("grant_type", "fb_exchange_token");
         longUrl.searchParams.append("client_id", process.env.META_APP_ID!);
         longUrl.searchParams.append("client_secret", process.env.META_APP_SECRET!);

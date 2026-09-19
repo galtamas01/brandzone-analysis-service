@@ -17,7 +17,7 @@ export async function GET(request: Request) {
         return NextResponse.json({ error: "Missing client_id query parameter" }, { status: 400 });
     }
 
-    const authUrl = new URL("https://www.facebook.com/v21.0/dialog/oauth");
+    const authUrl = new URL("https://www.facebook.com/v26.0/dialog/oauth");
     authUrl.searchParams.append("client_id", appId);
     authUrl.searchParams.append("redirect_uri", redirectUri);
     authUrl.searchParams.append("response_type", "code");
