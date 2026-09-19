@@ -10,7 +10,8 @@ export type MetaPage = {
 
 export async function fetchManagedPages(userToken: string): Promise<MetaPage[]> {
     const url = new URL("https://graph.facebook.com/v21.0/me/accounts");
-    url.searchParams.append("fields", "id,name,access_token,instagram_business_account{id,username}");
+    //url.searchParams.append("fields", "id,name,access_token,instagram_business_account{id,username}");
+    url.searchParams.append("fields", "id,name,access_token");
     url.searchParams.append("access_token", userToken);
 
     const res = await fetch(url.toString());
