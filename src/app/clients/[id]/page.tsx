@@ -75,18 +75,24 @@ export default async function ClientDetailPage({
                 <div className={styles.sectionHeader}>
                     <h2 className={styles.sectionTitle}>Connected accounts</h2>
                     <div className={styles.connectButtons}>
-                         <a className={styles.connectButton} href={`/api/auth/youtube?client_id=${client.id}`}>
-                            <span className="material-symbols-outlined">add</span>
-                            Add YouTube account
-                        </a>
-                        <a className={styles.connectButton} href={`/api/auth/tiktok?client_id=${client.id}`}>
-                            <span className="material-symbols-outlined">add</span>
-                            Add TikTok account
-                        </a>
-                        <a className={styles.connectButton} href={`/api/auth/meta?client_id=${client.id}`}>
-                            <span className="material-symbols-outlined">add</span>
-                            Add Meta account
-                        </a>
+                         <div className={styles.connectDropdown}>
+                            <button type="button" className={styles.connectButton}>
+                                <span className="material-symbols-outlined">add</span>
+                                Add account
+                                <span className={`material-symbols-outlined ${styles.chevron}`}>expand_more</span>
+                            </button>
+                            <div className={styles.connectMenu}>
+                                <a href={`/api/auth/youtube?client_id=${client.id}`} className={styles.connectMenuItem}>
+                                    YouTube
+                                </a>
+                                <a href={`/api/auth/tiktok?client_id=${client.id}`} className={styles.connectMenuItem}>
+                                    TikTok
+                                </a>
+                                <a href={`/api/auth/meta?client_id=${client.id}`} className={styles.connectMenuItem}>
+                                    Meta (Facebook / Instagram)
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
             

@@ -61,16 +61,68 @@
   margin-bottom: var(--space-5);
 }
 
-.connectButtons {
-  display: flex;
-  gap: var(--space-3);
-  flex-wrap: wrap;
-}
-
 .sectionTitle {
   font-size: var(--text-h2-size);
   font-weight: var(--fw-bold);
   color: var(--text-primary);
+}
+
+.connectDropdown {
+  position: relative;
+  display: inline-block;
+}
+
+.chevron {
+  font-size: 18px !important;
+  margin-left: var(--space-1);
+  transition: var(--ease-standard);
+}
+
+.connectDropdown:hover .chevron,
+.connectDropdown:focus-within .chevron {
+  transform: rotate(180deg);
+}
+
+.connectMenu {
+  position: absolute;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  padding: var(--space-2);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  background-color: var(--glass-bg);
+  backdrop-filter: blur(var(--blur-glass));
+  -webkit-backdrop-filter: blur(var(--blur-glass));
+  box-shadow: var(--shadow-glass);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: var(--ease-standard);
+  z-index: 10;
+}
+
+.connectDropdown:hover .connectMenu,
+.connectDropdown:focus-within .connectMenu {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.connectMenuItem {
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-family: var(--font-body);
+  font-size: var(--text-body-size);
+  text-decoration: none;
+  transition: var(--ease-standard);
+}
+
+.connectMenuItem:hover {
+  background-color: var(--surface-dark);
 }
 
 .connectButton {
