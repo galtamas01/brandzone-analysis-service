@@ -89,6 +89,61 @@ async function sumPostLikes(pageId: string, token: string): Promise<number> {
     return total;
 }
 
+async function sumInstagramViews(igId: string, token: string): Promise<number> {
+    const WINDOW_SECONDS = 80 * 24 * 60 * 60;
+    const now = Math.floor(Date.now() / 1000);
+    const twoYearsAgo = now - 2 * 365 * 24 * 60 * 60;
+
+    let total = 0;
+    let windowStart = twoYearsAgo;
+    let safetyCounter = 0;
+
+    while (windowStart < now && safetyCounter < 30) {
+        safetyCounter++;
+        const windowEnd = Math.min(windowStart + WINDOW_SECONDS, now);
+
+        const url = `${GRAPH}/${igId}/insights?metric=views&metric_type=total_value&period=day&since=${windowStart}&until=${windowEnd}`;
+        const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+        const data = await res.json();
+
+        if (!res.ok || data.error) {
+            console.error("[meta] sumInstagramViews error: ", JSON.stringify(data));
+            handleMetaApiError("sumInstagramViews", data);
+        }
+
+        const value = data.data?.[0]?.total_value.value ?? 0;
+        total += Number(value);
+
+        windowStart = windowEnd;
+    }
+
+    return total;
+}
+
+async function sumInstagramLikes(igId: string, token: string): Promise<number> {
+    let url: string | null = `${GRAPH}/${igId}/media?fields=like_count&limit=100`;
+    let total = 0;
+    let safetyCounter = 0;
+
+    while (url && safetyCounter < 50) {
+        safetyCounter++;
+        const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
+        const data: any = await res.json();
+
+        if (!res.ok || data.error) {
+            console.error("[meta] sumInstagramLikes error: ", JSON.stringify(data));
+            handleMetaApiError("sumInstagramLikes", data);
+        }
+
+        const media = data.data ?? [];
+        for (const m of media) total += Number(m.like_count ?? 0);
+
+        url = data.paging?.next ?? null;
+    }
+
+    return total;
+}
+
 export type MetaSnapshotResult = {
     account_id: string;
     date: string;
@@ -137,6 +192,56 @@ export async function collectFacebookSnapshot(accountId: string): Promise<MetaSn
 
         await setAccountStatus(accountId, "active");
         return { account_id: accountId, date: today, views, likes, followers };
+    } catch (err) {
+        if (err instanceof TokenError) {
+            await setAccountStatus(accountId, err.code === "REFRESH_FAILED" ? "error" : "needs_reauth");
+        } else {
+            await setAccountStatus(accountId, "error");
+        }
+        throw err;
+    }
+}
+
+export async function collectInstagramSnapshot(accountId: string): Promise<MetaSnapshotResult> {
+    try {
+        const { data: account } = await supabaseAdmin
+            .from("account")
+            .select("platform_account_id")
+            .eq("id", accountId)
+            .maybeSingle()
+
+        if (!account) throw new Error("Account not found");
+        const igId = account.platform_account_id;
+
+        const token = await getMetaPageToken(accountId);
+
+        const followersRes = await fetch(`${GRAPH}/${igId}?fields=followers_count`, {
+            headers: { Authorization: `Bearer ${token}` },
+        });
+        const followersData = await followersRes.json();
+        if (!followersRes.ok || followersData.error) {
+            console.error("[meta] instagram followers_count error: ", JSON.stringify(followersData));
+            handleMetaApiError("collectInstagramSnapshot", followersData);
+        }
+
+        const followers = Number(followersData.followers_count ?? 0);
+        const views = await sumInstagramViews(igId, token);
+        const likes = await sumInstagramLikes(igId, token);
+
+        const today = toDateString(new Date());
+        const { error: upsertError } = await supabaseAdmin
+            .from("metric")
+            .upsert(
+                { account_id: accountId, date: today, views, likes, followers },
+                { onConflict: "account_id,date" }
+            );
+        if (upsertError) {
+            console.error("Meta upsert error: ", upsertError);
+            throw new Error("Failed to store metric snapshot");
+        }
+
+        await setAccountStatus(accountId, "active");
+        return { account_id: accountId, date: today, views, likes, followers }
     } catch (err) {
         if (err instanceof TokenError) {
             await setAccountStatus(accountId, err.code === "REFRESH_FAILED" ? "error" : "needs_reauth");
