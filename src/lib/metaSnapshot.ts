@@ -90,7 +90,7 @@ async function sumPostLikes(pageId: string, token: string): Promise<number> {
 }
 
 async function sumInstagramViews(igId: string, token: string): Promise<number> {
-    const WINDOW_SECONDS = 80 * 24 * 60 * 60;
+    const WINDOW_SECONDS = 27 * 24 * 60 * 60;
     const now = Math.floor(Date.now() / 1000);
     const twoYearsAgo = now - 2 * 365 * 24 * 60 * 60;
 
@@ -98,7 +98,7 @@ async function sumInstagramViews(igId: string, token: string): Promise<number> {
     let windowStart = twoYearsAgo;
     let safetyCounter = 0;
 
-    while (windowStart < now && safetyCounter < 30) {
+    while (windowStart < now && safetyCounter < 40) {
         safetyCounter++;
         const windowEnd = Math.min(windowStart + WINDOW_SECONDS, now);
 
