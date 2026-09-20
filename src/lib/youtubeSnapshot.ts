@@ -1,5 +1,6 @@
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
-import { getValidAccessToken, TokenError } from "@/lib/youtubeAuth";
+import { getValidAccessToken} from "@/lib/youtubeAuth";
+import { TokenError } from "./tokens";
 
 function toDateString(d: Date): string {
     return d.toISOString().slice(0, 10);

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { collectInstagramSnapshot } from "@/lib/metaSnapshot";
-import { TokenError } from "@/lib/youtubeAuth";
+import { TokenError } from "@/lib/tokens";
 
 export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);

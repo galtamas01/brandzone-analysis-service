@@ -1,25 +1,8 @@
 import { supabaseAdmin } from "./supabaseAdmin";
 import { encrypt, decrypt } from "./encryption";
+import { TokenError } from "./tokens";
 
 const EXPIRY_BUFFER_MS = 5 * 60 * 1000;
-
-export type TokenErrorCode = 
-    | "NO_TOKEN"
-    | "NO_REFRESH_TOKEN"
-    | "REAUTH_REQUIRED"
-    | "REFRESH_FAILED";
-
-export class TokenError extends Error {
-    code: TokenErrorCode;
-    status: number;
-
-    constructor(code: TokenErrorCode, message: string, status: number) {
-        super(message);
-        this.name = "TokenError";
-        this.code = code;
-        this.status = status;
-    }
-}
 
 export async function getValidAccessToken(accountId: string): Promise<string> {
     const { data: tokenRow, error: tokenError } = await supabaseAdmin

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { collectYoutubeSnapshot } from "@/lib/youtubeSnapshot";
-import { TokenError } from "@/lib/youtubeAuth";
+import { TokenError } from "@/lib/tokens";
 
 function toDateString(d: Date): string {
     return d.toISOString().slice(0, 10);

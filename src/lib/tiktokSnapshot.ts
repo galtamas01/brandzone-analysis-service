@@ -1,6 +1,6 @@
 import { supabaseAdmin } from "./supabaseAdmin";
 import { getValidTiktokAccessToken } from "./tiktokAuth";
-import { TokenError } from "./youtubeAuth";
+import { TokenError } from "./tokens";
 
 function toDateString(d: Date): string {
     return d.toISOString().slice(0, 10);

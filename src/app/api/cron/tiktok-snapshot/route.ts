@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { collectTiktokSnapshot } from "@/lib/tiktokSnapshot";
-import { TokenError } from "@/lib/youtubeAuth";
+import { TokenError } from "@/lib/tokens";
 
 type AccountResult = {
     account_id: string;

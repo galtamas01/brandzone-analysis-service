@@ -1,6 +1,6 @@
 import { supabaseAdmin } from "./supabaseAdmin";
 import { encrypt, decrypt } from "./encryption";
-import { TokenError } from "./youtubeAuth";
+import { TokenError } from "./tokens";
 
 const EXPIRY_BUFFER_MS = 5 * 60 * 1000;
 

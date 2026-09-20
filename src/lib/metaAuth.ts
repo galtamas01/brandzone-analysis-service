@@ -1,6 +1,6 @@
 import { supabaseAdmin } from "./supabaseAdmin";
 import { decrypt } from "./encryption";
-import { TokenError } from "./youtubeAuth";
+import { TokenError } from "./tokens";
 
 export async function getMetaPageToken(accountId: string): Promise<string> {
     const { data: tokenRow, error } = await supabaseAdmin

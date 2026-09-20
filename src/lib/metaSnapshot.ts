@@ -1,6 +1,6 @@
 import { supabaseAdmin } from "./supabaseAdmin";
 import { getMetaPageToken } from "./metaAuth";
-import { TokenError } from "./youtubeAuth";
+import { TokenError } from "./tokens";
 
 const GRAPH = "https://graph.facebook.com/v26.0";
 
