@@ -1,21 +1,9 @@
 import { supabaseAdmin } from "./supabaseAdmin";
 import { getMetaPageToken } from "./metaAuth";
 import { TokenError } from "./tokens";
+import { type SnapshotResult, setAccountStatus, finalizeSnapshot } from "./snapshotHelpers";
 
 const GRAPH = "https://graph.facebook.com/v26.0";
-
-function toDateString(d: Date): string {
-    return d.toISOString().slice(0, 10);
-}
-
-async function setAccountStatus(accountId: string, status: "active" | "needs_reauth" | "error") {
-    const { error } = await supabaseAdmin
-        .from("account")
-        .update({ status })
-        .eq("id", accountId);
-
-    if (error) console.error("Failed to update account status", error);
-}
 
 function isAuthError(data: any): boolean {
     return data?.error?.type === "OAuthException";
@@ -144,15 +132,7 @@ async function sumInstagramLikes(igId: string, token: string): Promise<number> {
     return total;
 }
 
-export type MetaSnapshotResult = {
-    account_id: string;
-    date: string;
-    views: number;
-    likes: number;
-    followers: number;
-};
-
-export async function collectFacebookSnapshot(accountId: string): Promise<MetaSnapshotResult> {
+export async function collectFacebookSnapshot(accountId: string): Promise<SnapshotResult> {
     try {
         const { data: account } = await supabaseAdmin
             .from("account")
@@ -177,21 +157,7 @@ export async function collectFacebookSnapshot(accountId: string): Promise<MetaSn
         const views = await sumMediaViews(pageId, token);
         const likes = await sumPostLikes(pageId, token);
 
-        const today = toDateString(new Date());
-        const { error: upsertError } = await supabaseAdmin
-            .from("metric")
-            .upsert(
-                { account_id: accountId, date: today, views, likes, followers },
-                { onConflict: "account_id,date" }
-            );
-        
-        if (upsertError) {
-            console.error("Metric upsert error: ", upsertError);
-            throw new Error("Failed to store metric snapshot");
-        }
-
-        await setAccountStatus(accountId, "active");
-        return { account_id: accountId, date: today, views, likes, followers };
+        return await finalizeSnapshot(accountId, { views, likes, followers });
     } catch (err) {
         if (err instanceof TokenError) {
             await setAccountStatus(accountId, err.code === "REFRESH_FAILED" ? "error" : "needs_reauth");
@@ -202,7 +168,7 @@ export async function collectFacebookSnapshot(accountId: string): Promise<MetaSn
     }
 }
 
-export async function collectInstagramSnapshot(accountId: string): Promise<MetaSnapshotResult> {
+export async function collectInstagramSnapshot(accountId: string): Promise<SnapshotResult> {
     try {
         const { data: account } = await supabaseAdmin
             .from("account")
@@ -228,20 +194,7 @@ export async function collectInstagramSnapshot(accountId: string): Promise<MetaS
         const views = await sumInstagramViews(igId, token);
         const likes = await sumInstagramLikes(igId, token);
 
-        const today = toDateString(new Date());
-        const { error: upsertError } = await supabaseAdmin
-            .from("metric")
-            .upsert(
-                { account_id: accountId, date: today, views, likes, followers },
-                { onConflict: "account_id,date" }
-            );
-        if (upsertError) {
-            console.error("Meta upsert error: ", upsertError);
-            throw new Error("Failed to store metric snapshot");
-        }
-
-        await setAccountStatus(accountId, "active");
-        return { account_id: accountId, date: today, views, likes, followers }
+        return await finalizeSnapshot(accountId, { views, likes, followers });
     } catch (err) {
         if (err instanceof TokenError) {
             await setAccountStatus(accountId, err.code === "REFRESH_FAILED" ? "error" : "needs_reauth");

@@ -1,28 +1,7 @@
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { getValidAccessToken} from "@/lib/youtubeAuth";
 import { TokenError } from "./tokens";
-
-function toDateString(d: Date): string {
-    return d.toISOString().slice(0, 10);
-}
-
-export type SnapshotResult = {
-    account_id: string;
-    date: string;
-    views: number;
-    likes: number;
-    followers: number;
-    likes_period: { start: string; end: string };
-};
-
-async function setAccountStatus(accountId: string, status: "active" | "needs_reauth" | "error") {
-    const { error } = await supabaseAdmin
-        .from("account")
-        .update({ status })
-        .eq("id", accountId);
-    
-    if (error) console.error("Failed to update account status: ", error);
-}
+import { type SnapshotResult, finalizeSnapshot, setAccountStatus, toDateString } from "./snapshotHelpers";
 
 export async function collectYoutubeSnapshot(accountId: string): Promise<SnapshotResult> {
     try {
@@ -65,24 +44,8 @@ export async function collectYoutubeSnapshot(accountId: string): Promise<Snapsho
             }
     
             const likes = Number(analyticsData.rows?.[0]?.[0] ?? 0);
-            const today = toDateString(new Date());
-    
-            const { error: upsertError } = await supabaseAdmin
-                .from("metric")
-                .upsert(
-                    { account_id: accountId, date: today, views, likes, followers },
-                    { onConflict: "account_id,date"}
-                );
-            
-            if (upsertError) {
-                console.error("Failed to store metric snapshot");
-                throw new Error("Failed to store metric snapshot");
-            }
-    
-            await setAccountStatus(accountId, "active");
-    
-            return { account_id: accountId, date: today, views, likes, followers, likes_period: { start: startDate, end: endDate} };
-            
+
+            return await finalizeSnapshot(accountId, { views, likes, followers });
         } catch(err) {
             if (err instanceof TokenError) {
                 await setAccountStatus(accountId, err.code === "REFRESH_FAILED" ? "error" : "needs_reauth");

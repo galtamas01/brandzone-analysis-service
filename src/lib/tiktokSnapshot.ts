@@ -1,26 +1,7 @@
 import { supabaseAdmin } from "./supabaseAdmin";
 import { getValidTiktokAccessToken } from "./tiktokAuth";
 import { TokenError } from "./tokens";
-
-function toDateString(d: Date): string {
-    return d.toISOString().slice(0, 10);
-}
-
-export type TiktokSnapshotResult = {
-    account_id: string;
-    date: string;
-    views: number;
-    likes: number;
-    followers: number;
-};
-
-async function setAccountStatus(accountId: string, status: "active" | "needs_reauth" | "error") {
-    const { error } = await supabaseAdmin
-        .from("account")
-        .update({ status })
-        .eq("id", accountId);
-    if (error) console.error("Failed to update account status: ", error);
-}
+import { type SnapshotResult, setAccountStatus, finalizeSnapshot } from "./snapshotHelpers";
 
 async function sumVideoViews(accessToken: string): Promise<number> {
     let totalViews = 0;
@@ -63,7 +44,7 @@ async function sumVideoViews(accessToken: string): Promise<number> {
     return totalViews;
 }
 
-export async function collectTiktokSnapshot(accountId: string): Promise<TiktokSnapshotResult> {
+export async function collectTiktokSnapshot(accountId: string): Promise<SnapshotResult> {
     try {
         const accessToken = await getValidTiktokAccessToken(accountId);
 
@@ -83,22 +64,7 @@ export async function collectTiktokSnapshot(accountId: string): Promise<TiktokSn
         const likes = Number(userInfoData.data?.user?.likes_count ?? 0);
         const views = await sumVideoViews(accessToken);
 
-        const today = toDateString(new Date());
-        const { error: upsertError } = await supabaseAdmin
-            .from("metric")
-            .upsert(
-                { account_id: accountId, date: today, views, likes, followers },
-                { onConflict: "account_id,date" }
-            );
-
-        if (upsertError) {
-            console.error("Metric upsert error: ", upsertError);
-            throw new Error("Failed to store metric snapshot");
-        }
-
-        await setAccountStatus(accountId, "active");
-
-        return { account_id: accountId, date: today, views, likes, followers };
+        return await finalizeSnapshot(accountId, { views, likes, followers });
     } catch (err) {
         if (err instanceof TokenError) {
             await setAccountStatus(accountId, err.code === "REFRESH_FAILED" ? "error" : "needs_reauth");
