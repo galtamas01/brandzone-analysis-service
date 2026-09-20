@@ -191,7 +191,6 @@ function drawPlatformPage(doc: typeof PDFDocument.prototype, client: string, per
             points: p.series.map((pt) => ({ date: pt.date, value: pt[c.key] }))
         });
     });
-    console.log("[pdf] három diagram kirajzolva:", p.platform);
     
     //adatokkal kapcsolatos megjegyzes
     if (p.dataCoverageNote) {
@@ -209,7 +208,6 @@ export function buildReportPdf(data: ClientReportData): Promise<Buffer> {
     const done = new Promise<Buffer>((resolve, reject) => {
         doc.on("data", (c: Buffer) => chunks.push(c));
         doc.on("end", () => {
-            console.log("[pdf] stream vége, buffer összeállt");
             resolve(Buffer.concat(chunks));
         });
         doc.on("error", reject);
@@ -229,7 +227,6 @@ export function buildReportPdf(data: ClientReportData): Promise<Buffer> {
         }
     }
 
-    console.log("[pdf] rajzolás kész, doc.end() következik");
     doc.end();
     return done;
 }

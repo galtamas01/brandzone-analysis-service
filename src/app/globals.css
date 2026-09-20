@@ -29,8 +29,10 @@ body::before {
   left: 0;
   z-index: -1;
   background-color: rgba(0, 0, 0, 0.3);
-  -webkit-backdrop-filter: blur(var(--blur-glass));
-  backdrop-filter: blur(var(--blur-glass));
+  /*-webkit-backdrop-filter: blur(var(--blur-glass));
+  backdrop-filter: blur(var(--blur-glass));*/
+  filter: blur(var(--blur-glass));
+  -webkit-filter: blur(var(--blur-glass));
   pointer-events: none;
 }
 
