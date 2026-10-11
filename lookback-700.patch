@@ -1,0 +1,43 @@
+diff --git a/src/lib/metaSnapshot.ts b/src/lib/metaSnapshot.ts
+index ea9b304..8ecd797 100644
+--- a/src/lib/metaSnapshot.ts
++++ b/src/lib/metaSnapshot.ts
+@@ -5,6 +5,12 @@ import { type SnapshotResult, setAccountStatus, finalizeSnapshot } from "./snaps
+ 
+ const GRAPH = "https://graph.facebook.com/v26.0";
+ 
++// A Meta insights-végpontjai kb. 2 évre engednek visszatekinteni; a mérések szerint
++// az Instagram `since` paramétere 729 napnál még elfogadott, 730 napnál már nem.
++// Ezért a pontos 2 évhez nem közelítünk: a határ előtt bőven megállunk.
++const LOOKBACK_DAYS = 700;
++const DAY_SECONDS = 24 * 60 * 60;
++
+ function isAuthError(data: any): boolean {
+     return data?.error?.type === "OAuthException";
+ }
+@@ -19,10 +25,10 @@ function handleMetaApiError(context: string, data: any): never {
+ async function sumMediaViews(pageId: string, token: string): Promise<number> {
+     const WINDOW_SECONDS = 80 * 24 * 60 * 60;
+     const now = Math.floor(Date.now() / 1000);
+-    const twoYearsAgo = now - 2 * 365 * 24 * 60 * 60;
++    const lookbackStart = now - LOOKBACK_DAYS * DAY_SECONDS;
+ 
+     let total = 0;
+-    let windowStart = twoYearsAgo;
++    let windowStart = lookbackStart;
+     let safetyCounter = 0;
+ 
+     while (windowStart < now && safetyCounter < 30) {
+@@ -80,10 +86,10 @@ async function sumPostLikes(pageId: string, token: string): Promise<number> {
+ async function sumInstagramViews(igId: string, token: string): Promise<number> {
+     const WINDOW_SECONDS = 27 * 24 * 60 * 60;
+     const now = Math.floor(Date.now() / 1000);
+-    const twoYearsAgo = now - 2 * 365 * 24 * 60 * 60;
++    const lookbackStart = now - LOOKBACK_DAYS * DAY_SECONDS;
+ 
+     let total = 0;
+-    let windowStart = twoYearsAgo;
++    let windowStart = lookbackStart;
+     let safetyCounter = 0;
+ 
+     while (windowStart < now && safetyCounter < 40) {
