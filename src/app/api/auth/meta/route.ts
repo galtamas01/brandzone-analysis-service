@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isUuid, issueOAuthState } from "@/lib/oauthState";
 
 export const dynamic = "force-dynamic";
 
@@ -13,8 +14,8 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const partnerClientId = searchParams.get("client_id");
-    if (!partnerClientId) {
-        return NextResponse.json({ error: "Missing client_id query parameter" }, { status: 400 });
+    if (!partnerClientId || !isUuid(partnerClientId)) {
+        return NextResponse.json({ error: "Missing or invalid client_id query parameter" }, { status: 400 });
     }
 
     const authUrl = new URL("https://www.facebook.com/v26.0/dialog/oauth");
@@ -22,7 +23,7 @@ export async function GET(request: Request) {
     authUrl.searchParams.append("redirect_uri", redirectUri);
     authUrl.searchParams.append("response_type", "code");
     authUrl.searchParams.append("config_id", configId);
-    authUrl.searchParams.append("state", partnerClientId);
+    authUrl.searchParams.append("state", await issueOAuthState("meta", partnerClientId));
 
     return NextResponse.redirect(authUrl.toString());
 }

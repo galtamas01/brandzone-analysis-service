@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { encrypt } from "@/lib/encryption";
 import { fetchManagedPages, saveMetaAccounts } from "@/lib/metaConnect";
+import { verifyOAuthState } from "@/lib/oauthState";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,8 @@ export async function GET(request: Request) {
     if (!code) return redirectTo(`/?error=missing_code`);
     if (!state) return redirectTo(`/?error=missing_state`);
 
-    const partnerClientId = state;
+    const partnerClientId = await verifyOAuthState("meta", state);
+    if (!partnerClientId) return redirectTo(`/?error=invalid_state`);
 
     try {
         const tokenUrl = new URL("https://graph.facebook.com/v26.0/oauth/access_token");

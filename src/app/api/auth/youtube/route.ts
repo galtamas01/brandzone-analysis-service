@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { isUuid, issueOAuthState } from "@/lib/oauthState";
 
 export const dynamic = "force-dynamic";
 
@@ -15,8 +16,8 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url);
     const partnerClientId = searchParams.get("client_id");
-    if (!partnerClientId) {
-        return NextResponse.json({ error: "Missing client_id query parameter." }, { status: 400 });
+    if (!partnerClientId || !isUuid(partnerClientId)) {
+        return NextResponse.json({ error: "Missing or invalid client_id query parameter." }, { status: 400 });
     }
 
     const scopes = [
@@ -32,7 +33,7 @@ export async function GET(request: Request) {
     googleAuthUrl.searchParams.append('scope', scopes.join(' '));
     googleAuthUrl.searchParams.append('access_type', 'offline');
     googleAuthUrl.searchParams.append('prompt', 'consent');
-    googleAuthUrl.searchParams.append('state', partnerClientId);
+    googleAuthUrl.searchParams.append('state', await issueOAuthState("youtube", partnerClientId));
     
     return NextResponse.redirect(googleAuthUrl.toString());
 }
