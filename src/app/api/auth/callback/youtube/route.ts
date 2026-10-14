@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { encrypt } from "@/lib/encryption";
+import { verifyOAuthState } from "@/lib/oatuhState";
 
 export const dynamic = "force-dynamic";
 
@@ -25,7 +26,10 @@ export async function GET(request: Request) {
         return redirectTo(`/?error=missing_state`);
     }
 
-    const partnerClientId = state;
+    const partnerClientId = await verifyOAuthState("youtube", state);
+    if (!partnerClientId) {
+        return redirectTo(`/?error=invalid_state`);
+    }
 
     try {
         const tokenUrl = 'https://oauth2.googleapis.com/token'

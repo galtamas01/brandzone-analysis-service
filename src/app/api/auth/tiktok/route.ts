@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import crypto from "crypto";
+import { isUuid, issueOAuthState } from "@/lib/oatuhState";
 
 export const dynamic = "force-dynamic";
 
@@ -26,7 +27,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url);
     const partnerClientId = searchParams.get("client_id");
     if (!partnerClientId) {
-        return NextResponse.json({ error: "Missing client ID query parameter" }, { status: 400 });
+        return NextResponse.json({ error: "Missing or invalid client_id query parameter." }, { status: 400 });
     }
 
     const codeVerifier = base64url(crypto.randomBytes(32));
@@ -46,7 +47,7 @@ export async function GET(request: Request) {
     authUrl.searchParams.append("redirect_uri", redirectUri);
     authUrl.searchParams.append("response_type", "code");
     authUrl.searchParams.append("scope", "user.info.basic,user.info.stats,video.list");
-    authUrl.searchParams.append("state", partnerClientId);
+    authUrl.searchParams.append('state', await issueOAuthState("tiktok", partnerClientId));
     authUrl.searchParams.append("code_challenge", codeChallenge);
     authUrl.searchParams.append("code_challenge_method", "S256");
 

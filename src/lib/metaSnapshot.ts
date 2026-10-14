@@ -4,10 +4,7 @@ import { TokenError } from "./tokens";
 import { type SnapshotResult, setAccountStatus, finalizeSnapshot } from "./snapshotHelpers";
 
 const GRAPH = "https://graph.facebook.com/v26.0";
-
-// A Meta insights-végpontjai kb. 2 évre engednek visszatekinteni; a mérések szerint
-// az Instagram `since` paramétere 729 napnál még elfogadott, 730 napnál már nem.
-// Ezért a pontos 2 évhez nem közelítünk: a határ előtt bőven megállunk.
+ 
 const LOOKBACK_DAYS = 700;
 const DAY_SECONDS = 24 * 60 * 60;
 

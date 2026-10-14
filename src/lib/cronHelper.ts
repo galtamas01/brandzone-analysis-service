@@ -1,12 +1,28 @@
+import crypto from "crypto";
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "./supabaseAdmin";
 import { TokenError } from "./tokens";
 
 type CollectFn = (accountId: string) => Promise<unknown>;
 
+function isAuthorizedCronRequest(request: Request): boolean {
+    const secret = process.env.CRON_SECRET;
+    if (!secret) {
+        console.error("CRON_SECRET is not set, cron request rejected");
+        return false;
+    }
+
+    const received = request.headers.get("authorization") ?? "";
+    const expected = `Bearer ${secret}`;
+
+    const receivedHash = crypto.createHash("sha256").update(received).digest();
+    const expectedHash = crypto.createHash("sha256").update(expected).digest();
+
+    return crypto.timingSafeEqual(receivedHash, expectedHash);
+}
+
 export async function runSnapshotCron(request: Request, platform: string, collect: CollectFn) {
-    const authHeader = request.headers.get("authorization");
-    if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
+    if (!isAuthorizedCronRequest(request)) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { supabaseAdmin } from "@/lib/supabaseAdmin";
 import { encrypt } from "@/lib/encryption";
+import { verifyOAuthState } from "@/lib/oatuhState";
 
 export const dynamic = "force-dynamic";
 
@@ -17,7 +18,11 @@ export async function GET(request: Request) {
     if (!code) return redirectTo(`/?error=missing_code`);
     if (!state) return redirectTo(`/?error=missing_state`);
 
-    const partnerClientId = state;
+    const partnerClientId = await verifyOAuthState("tiktok", state);
+    if (!partnerClientId) {
+        return redirectTo(`/?error=invalid_state`);
+    }
+
 
     const cookieStore = await cookies();
     const codeVerifier = cookieStore.get("tiktok_code_verifier")?.value;
