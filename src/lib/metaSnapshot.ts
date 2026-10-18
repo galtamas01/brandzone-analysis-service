@@ -1,12 +1,18 @@
 import { supabaseAdmin } from "./supabaseAdmin";
 import { getMetaPageToken } from "./metaAuth";
 import { TokenError } from "./tokens";
-import { type SnapshotResult, setAccountStatus, finalizeSnapshot } from "./snapshotHelpers";
+import { type SnapshotResult, setAccountStatus, finalizeSnapshot, getPreviousMetric, toDateString } from "./snapshotHelpers";
 
 const GRAPH = "https://graph.facebook.com/v26.0";
  
 const LOOKBACK_DAYS = 700;
 const DAY_SECONDS = 24 * 60 * 60;
+const LAG_DAYS = 2;
+
+function boundaryFor(dateStr: string): number {
+    const midnight = Math.floor(Date.parse(`${dateStr}T00:00:00Z`) / 1000);
+    return midnight - LAG_DAYS * DAY_SECONDS;
+}
 
 function isAuthError(data: any): boolean {
     return data?.error?.type === "OAuthException";
@@ -19,18 +25,34 @@ function handleMetaApiError(context: string, data: any): never {
     throw new Error(`Failed at ${context}`);
 }
 
-async function sumMediaViews(pageId: string, token: string): Promise<number> {
+
+async function computeCumulativeViews(accountId: string, sumRange: (since: number, until: number) => Promise<number>): Promise<number> {
+    const today = toDateString(new Date());
+    const until = boundaryFor(today);
+    const earliest = until - LOOKBACK_DAYS * DAY_SECONDS;
+
+    const prev = await getPreviousMetric(accountId, today);
+    if (!prev) return sumRange(earliest, until);
+
+    const since = Math.max(boundaryFor(prev.date), earliest);
+    if (since >= until) return prev.views;
+
+    return prev.views + (await sumRange(since, until));
+}
+
+
+async function sumMediaViews(pageId: string, token: string, since: number, until: number): Promise<number> {
     const WINDOW_SECONDS = 80 * 24 * 60 * 60;
-    const now = Math.floor(Date.now() / 1000);
-    const lookbackStart = now - LOOKBACK_DAYS * DAY_SECONDS;
+    const fetchStart = since - DAY_SECONDS;
+    const fetchEnd = until + DAY_SECONDS;
 
     let total = 0;
-    let windowStart = lookbackStart;
+    let windowStart = fetchStart;
     let safetyCounter = 0;
 
-    while (windowStart < now && safetyCounter < 30) {
+    while (windowStart < fetchEnd && safetyCounter < 30) {
         safetyCounter++;
-        const windowEnd = Math.min(windowStart + WINDOW_SECONDS, now);
+        const windowEnd = Math.min(windowStart + WINDOW_SECONDS, fetchEnd);
 
         let url: string | null =
             `${GRAPH}/${pageId}/insights?metric=page_media_view&period=day&since=${windowStart}&until=${windowEnd}`;
@@ -80,18 +102,16 @@ async function sumPostLikes(pageId: string, token: string): Promise<number> {
     return total;
 }
 
-async function sumInstagramViews(igId: string, token: string): Promise<number> {
+async function sumInstagramViews(igId: string, token: string, since: number, until: number): Promise<number> {
     const WINDOW_SECONDS = 27 * 24 * 60 * 60;
-    const now = Math.floor(Date.now() / 1000);
-    const lookbackStart = now - LOOKBACK_DAYS * DAY_SECONDS;
 
     let total = 0;
-    let windowStart = lookbackStart;
+    let windowStart = since;
     let safetyCounter = 0;
 
-    while (windowStart < now && safetyCounter < 40) {
+    while (windowStart < until && safetyCounter < 40) {
         safetyCounter++;
-        const windowEnd = Math.min(windowStart + WINDOW_SECONDS, now);
+        const windowEnd = Math.min(windowStart + WINDOW_SECONDS, until);
 
         const url = `${GRAPH}/${igId}/insights?metric=views&metric_type=total_value&period=day&since=${windowStart}&until=${windowEnd}`;
         const res = await fetch(url, { headers: { Authorization: `Bearer ${token}` } });
@@ -157,7 +177,7 @@ export async function collectFacebookSnapshot(accountId: string): Promise<Snapsh
         }
 
         const followers = Number(fanData.fan_count ?? 0);
-        const views = await sumMediaViews(pageId, token);
+        const views = await computeCumulativeViews(accountId, (s, u) => sumMediaViews(pageId, token, s, u));
         const likes = await sumPostLikes(pageId, token);
 
         return await finalizeSnapshot(accountId, { views, likes, followers });
@@ -194,7 +214,7 @@ export async function collectInstagramSnapshot(accountId: string): Promise<Snaps
         }
 
         const followers = Number(followersData.followers_count ?? 0);
-        const views = await sumInstagramViews(igId, token);
+        const views = await computeCumulativeViews(accountId, (s, u) => sumInstagramViews(igId, token, s, u));
         const likes = await sumInstagramLikes(igId, token);
 
         return await finalizeSnapshot(accountId, { views, likes, followers });

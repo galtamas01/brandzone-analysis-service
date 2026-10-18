@@ -38,3 +38,22 @@ export async function finalizeSnapshot(accountId: string, metrics: { views: numb
     return { account_id: accountId, date: today, ...metrics };
 }
 
+export async function getPreviousMetric(accountId: string, beforeDate: string): 
+    Promise<{ date: string; views: number } | null> {
+        const { data, error } = await supabaseAdmin
+            .from("metric")
+            .select("date, views")
+            .eq("account_id", accountId)
+            .lt("date", beforeDate)
+            .order("date", { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+        if (error) {
+            console.error("Previous metric read error: ", error);
+            throw new Error("Failed to read previous metric");
+        }
+
+        return data ? { date: data.date as string, views: Number(data.views) } : null;
+}
+
