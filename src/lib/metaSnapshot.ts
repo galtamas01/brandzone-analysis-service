@@ -68,7 +68,10 @@ async function sumMediaViews(pageId: string, token: string, since: number, until
             }
 
             const values = data.data?.[0]?.values ?? [];
-            for (const v of values) total += Number(v.value ?? 0);
+            for (const v of values) {
+                const end = Math.floor(Date.parse(v.end_time) / 1000);
+                if (end > since && end <= until) total += Number(v.value ?? 0);
+            }
 
             url = data.paging?.next ?? null;
         }
