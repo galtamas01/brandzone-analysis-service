@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { buildClientReportData } from "@/lib/reportData";
 import { buildReportPdf } from "@/lib/pdf/reportPdf";
+import { parseReportLocale } from "@/lib/i18n/reportLocale";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic"
@@ -10,6 +11,7 @@ export async function GET(request: Request) {
     const clientId = searchParams.get("client_id");
     const start = searchParams.get("start");
     const end = searchParams.get("end");
+    const locale = parseReportLocale(searchParams.get("lang"));
 
     if (!clientId || !start || !end) {
         return NextResponse.json(
@@ -20,10 +22,10 @@ export async function GET(request: Request) {
 
     try {
         const data = await buildClientReportData(clientId, start, end);
-        const pdf = await buildReportPdf(data);
+        const pdf = await buildReportPdf(data, locale);
 
         const safeName = data.clientName.replace(/[^\p{L}\p{N}_-]+/gu, "_");
-        const fileName = `${safeName}_${start}_${end}.pdf`;
+        const fileName = `${safeName}_${start}_${end}_${locale}.pdf`;
 
         return new NextResponse(new Uint8Array(pdf), {
             headers: {

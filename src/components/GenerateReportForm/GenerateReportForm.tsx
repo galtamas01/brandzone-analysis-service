@@ -3,6 +3,7 @@
 import { useState } from "react"
 import 'material-symbols/outlined.css';
 import styles from "./GenerateReportForm.module.css"
+import { type ReportLocale, DEFAULT_REPORT_LOCALE } from "@/lib/i18n/reportLocale";
 
 function toInputDate(d: Date): string {
     const y = d.getFullYear();
@@ -22,6 +23,7 @@ export default function GenerateReportForm({ clientId }: Props) {
 
     const [start, setStart] = useState(toInputDate(monthAgo));
     const [end, setEnd] = useState(toInputDate(today));
+    const [lang, setLang] = useState<ReportLocale>(DEFAULT_REPORT_LOCALE);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
@@ -39,7 +41,7 @@ export default function GenerateReportForm({ clientId }: Props) {
 
         setLoading(true);
         try {
-            const url = `/api/reports?client_id=${clientId}&start=${start}&end=${end}`;
+            const url = `/api/reports?client_id=${clientId}&start=${start}&end=${end}&lang=${lang}`;
             const res = await fetch(url);
 
             if (!res.ok) {
@@ -53,7 +55,7 @@ export default function GenerateReportForm({ clientId }: Props) {
 
             const disposition = res.headers.get("Content-Disposition") ?? "";
             const match = disposition.match(/filename="(.+?)"/);
-            const fileName = match?.[1] ?? `report_${start}_${end}.pdf`;
+            const fileName = match?.[1] ?? `report_${start}_${end}_${lang}.pdf`;
 
             const a = document.createElement("a");
             a.href = objectUrl;
@@ -93,6 +95,19 @@ export default function GenerateReportForm({ clientId }: Props) {
                         className={styles.input}
                         disabled={loading}
                     />
+                </label>
+                <label className={styles.field}>
+                    <span className={styles.label}>Language</span>
+                    <select
+                        value={lang}
+                        onChange={(e) => setLang(e.target.value as ReportLocale)}
+                        className={styles.select}
+                        disabled={loading}
+                    >
+                        <option value="hu">HU</option>
+                        <option value="ro">RO</option>
+                        <option value="en">EN</option>
+                    </select>
                 </label>
                 <button onClick={handleGenerate} disabled={loading} className={styles.button}>
                     <span className="material-symbols-outlined">download</span>

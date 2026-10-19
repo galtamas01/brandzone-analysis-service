@@ -36,6 +36,23 @@
     border-color: var(--border-hover);
 }
 
+.select {
+    padding: var(--space-3) var(--space-4);
+    border: 1px solid var(--border-subtle);
+    border-radius: var(--radius-md);
+    background-color: var(--glass-bg);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: var(--text-body-size);
+    color-scheme: dark;
+    cursor: pointer;
+}
+
+.select:focus {
+    outline: none;
+    border-color: var(--border-hover);
+}
+
 .button {
     display: inline-flex;
     align-items: center;

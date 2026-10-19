@@ -1,6 +1,8 @@
 import PDFDocument from "pdfkit";
 import { registerFonts } from "./fonts";
 import type { ClientReportData, PlatformReportData } from "../reportData";
+import { type ReportLocale, type ReportStrings, getReportStrings, DEFAULT_REPORT_LOCALE } from "../i18n/reportLocale";
+
 
 const COLOR = {
     bg: "#0A0A0B",
@@ -15,8 +17,8 @@ const COLOR = {
 
 const PAGE = { width: 595.28, height: 841.89, margin: 48 };
 
-function fmt(n: number): string {
-    return n.toLocaleString("hu-HU");
+function fmt(n: number, L: ReportStrings): string {
+    return n.toLocaleString(L.numberLocale);
 }
 
 function shortDate(fullDate: string) {
@@ -31,11 +33,12 @@ type ChartOpts = {
     color: string;
     title: string;
     points: { date: string; value: number }[];
+    L: ReportStrings;
 };
 
 const GRID_COLOR = "#1E1E24";
 function drawLineChart(doc: typeof PDFDocument.prototype, o: ChartOpts) {
-    const { x, y, width, height, color, title, points } = o;
+    const { x, y, width, height, color, title, points, L } = o;
 
     doc.font("Poppins-Medium").fontSize(10).fillColor(COLOR.textMuted).text(title, x, y);
 
@@ -44,7 +47,7 @@ function drawLineChart(doc: typeof PDFDocument.prototype, o: ChartOpts) {
     const bottom = top + chartH;
 
     if (points.length === 0) {
-        doc.font("Poppins").fontSize(8).fillColor(COLOR.textMuted).text("nincs adat", x, top);
+        doc.font("Poppins").fontSize(8).fillColor(COLOR.textMuted).text(L.noChartData, x, top);
         return;
     }
 
@@ -112,7 +115,7 @@ function drawLineChart(doc: typeof PDFDocument.prototype, o: ChartOpts) {
     ticks.forEach((t) => {
         const yPos = bottom - t * chartH;
         const value = min + t * (max - min);
-        doc.text(fmt(Math.round(value)), x - 40, yPos - 3, { width: 36, align: "right" });
+        doc.text(fmt(Math.round(value), L), x - 40, yPos - 3, { width: 36, align: "right" });
     });
 
     // 6) x-tengely dátumfeliratok (0/25/50/75/100%-nál) — a rajzterület alatt, sorrend-független
@@ -132,7 +135,7 @@ function drawLineChart(doc: typeof PDFDocument.prototype, o: ChartOpts) {
     });
 }
 
-function drawPlatformPage(doc: typeof PDFDocument.prototype, client: string, period: string, p: PlatformReportData) {
+function drawPlatformPage(doc: typeof PDFDocument.prototype, client: string, period: string, p: PlatformReportData, L: ReportStrings) {
     doc.rect(0, 0, PAGE.width, PAGE.height).fill(COLOR.bg);
 
     const x = PAGE.margin;
@@ -152,19 +155,19 @@ function drawPlatformPage(doc: typeof PDFDocument.prototype, client: string, per
     const cardGap = 12;
     const cardW = (PAGE.width - 2 * PAGE.margin - 2 * cardGap) / 3;
     const cards = [
-        { label: "All views", value: p.endViews, delta: p.deltaViews, color: COLOR.views },
-        { label: "All likes", value: p.endLikes, delta: p.deltaLikes, color: COLOR.likes },
-        { label: "All followers", value: p.endFollowers, delta: p.deltaFollowers, color: COLOR.followers },
+        { label: L.cardViews, value: p.endViews, delta: p.deltaViews, color: COLOR.views },
+        { label: L.cardLikes, value: p.endLikes, delta: p.deltaLikes, color: COLOR.likes },
+        { label: L.cardFollowers, value: p.endFollowers, delta: p.deltaFollowers, color: COLOR.followers },
     ];
 
     cards.forEach((c, i) => {
         const cx = x + i * (cardW + cardGap);
         doc.roundedRect(cx, y, cardW, 78, 10).fillAndStroke(COLOR.panel, COLOR.border);
         doc.font("Poppins").fontSize(9).fillColor(COLOR.textMuted).text(c.label, cx + 12, y + 12, { width: cardW - 24 });
-        doc.font("Poppins-Black").fontSize(20).fillColor(c.color).text(fmt(c.value), cx + 12, y + 28, { width: cardW - 24 });
+        doc.font("Poppins-Black").fontSize(20).fillColor(c.color).text(fmt(c.value, L), cx + 12, y + 28, { width: cardW - 24 });
         const sign = c.delta >= 0 ? "+" : "";
         doc.font("Poppins-Medium").fontSize(9).fillColor(COLOR.textMuted)
-            .text(`${sign}${fmt(c.delta)} in period`, cx + 12, y + 56, { width: cardW - 24 });
+            .text(`${sign}${fmt(c.delta, L)} ${L.deltaSuffix}`, cx + 12, y + 56, { width: cardW - 24 });
     });
     y += 78 + 24;
 
@@ -175,9 +178,9 @@ function drawPlatformPage(doc: typeof PDFDocument.prototype, client: string, per
     const chartGap = 28;
 
     const charts = [
-        { title: "Views", color: COLOR.views, key: "views" as const},
-        { title: "Likes", color: COLOR.likes, key: "likes" as const},
-        { title : "Followers", color: COLOR.followers, key: "followers" as const}
+        { title: L.chartViews, color: COLOR.views, key: "views" as const},
+        { title: L.chartLikes, color: COLOR.likes, key: "likes" as const},
+        { title : L.chartFollowers, color: COLOR.followers, key: "followers" as const}
     ];
 
     charts.forEach((c, i) => {
@@ -188,19 +191,23 @@ function drawPlatformPage(doc: typeof PDFDocument.prototype, client: string, per
             height: chartH,
             color: c.color,
             title: c.title,
-            points: p.series.map((pt) => ({ date: pt.date, value: pt[c.key] }))
+            points: p.series.map((pt) => ({ date: pt.date, value: pt[c.key] })),
+            L,
         });
     });
     
     //adatokkal kapcsolatos megjegyzes
-    if (p.dataCoverageNote) {
+    if (p.dataCoverageCode) {
+        const note = p.dataCoverageCode === "no_data" ? L.coverageNoData : L.coveragePartialBaseline;
         doc.font("Poppins").fontSize(8).fillColor(COLOR.textMuted)
-            .text(p.dataCoverageNote, x, PAGE.height - PAGE.margin - 20, { width: PAGE.width - 2 * PAGE.margin });
+            .text(note, x, PAGE.height - PAGE.margin - 20, { width: PAGE.width - 2 * PAGE.margin });
     }
 
 }
 
-export function buildReportPdf(data: ClientReportData): Promise<Buffer> {
+export function buildReportPdf(data: ClientReportData, locale: ReportLocale = DEFAULT_REPORT_LOCALE): Promise<Buffer> {
+    const L = getReportStrings(locale);
+
     const doc = new PDFDocument({ size: "A4", margin: PAGE.margin, autoFirstPage: false });
     registerFonts(doc);
 
@@ -223,7 +230,7 @@ export function buildReportPdf(data: ClientReportData): Promise<Buffer> {
     } else {
         for (const p of data.platforms) {
             doc.addPage();
-            drawPlatformPage(doc, data.clientName, period, p);
+            drawPlatformPage(doc, data.clientName, period, p, L);
         }
     }
 

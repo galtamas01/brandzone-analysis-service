@@ -14,6 +14,8 @@ export type DailyPoint = {
     followers: number;
 }
 
+export type DataCoverageCode = "no_data" | "partial_baseline";
+
 export type PlatformReportData = {
     platform: string;
     accountNames: string[];
@@ -24,7 +26,7 @@ export type PlatformReportData = {
     endViews: number;
     endLikes: number;
     endFollowers: number;
-    dataCoverageNote: string | null;
+    dataCoverageCode: DataCoverageCode | null;
 };
 
 export type ClientReportData = {
@@ -147,10 +149,10 @@ async function buildPlatformReportData(
         endViews: last?.views ?? 0,
         endLikes: last?.likes ?? 0,
         endFollowers: last?.followers ?? 0,
-        dataCoverageNote: !anyDataAtAll
-            ? "No data available in the given time range"
+        dataCoverageCode: !anyDataAtAll
+            ? "no_data"
             : anyMissingBaseline
-            ? "Start point is earlier than data source in case of one or more accounts. Starting point is the earliest data in these cases."
+            ? "partial_baseline"
             : null,
     };
 }
