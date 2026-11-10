@@ -5,7 +5,7 @@ const PUBLIC_PREFIXES = [
     "/login",
     "/api/auth/callback",
     "/api/cron",
-    "/google6f93cf22aec52d47.html"
+    "/googlec0c283d50113e694.html"
 ];
 
 function isPublic(pathName: string): boolean {
