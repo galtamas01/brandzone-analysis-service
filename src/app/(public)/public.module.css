@@ -1,0 +1,47 @@
+.main {
+  margin: var(--space-8) auto;
+  width: 60%;
+  max-width: 760px;
+  padding: var(--space-8);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-lg);
+  background-color: var(--glass-bg);
+  font-family: var(--font-body);
+  color: var(--text-primary);
+  line-height: 1.6;
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: var(--text-h1-size);
+  font-weight: var(--fw-black);
+  text-shadow: var(--text-h1-shadow);
+}
+
+.lead {
+  margin: var(--space-4) 0 var(--space-6);
+  color: var(--text-secondary);
+  font-size: var(--text-body-size);
+}
+
+.section { margin-top: var(--space-6); }
+
+.heading {
+  margin-bottom: var(--space-2);
+  font-size: var(--text-h2-size);
+  font-weight: var(--fw-bold);
+}
+
+.section p,
+.section li { color: var(--text-secondary); font-size: var(--text-body-size); }
+
+.section ul { padding-left: var(--space-5); }
+
+.meta { margin-top: var(--space-6); color: var(--text-muted); font-size: var(--text-caption-size); }
+
+/* globals.css strips link styling, so links need an explicit look */
+.link { color: var(--text-primary); text-decoration: underline; }
+
+@media (max-width: 640px) {
+  .main { width: 92%; padding: var(--space-6) var(--space-4); }
+}
